@@ -1,6 +1,9 @@
 from sqlalchemy.orm import Session
 
-from app.models.order import Order
+from app.models.order import (
+    Order,
+    OrderStatus,
+)
 
 from app.models.payment import (
     Payment,
@@ -43,9 +46,7 @@ def create_payment(
     existing_payment = (
         db.query(Payment)
         .filter(
-            Payment.order_id == order.id,
-            Payment.payment_status
-            == PaymentStatus.SUCCESS,
+            Payment.order_id == order.id
         )
         .first()
     )

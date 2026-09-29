@@ -8,7 +8,11 @@ from app.models.inventory import (
     InventoryTransaction,
     InventoryTransactionType,
 )
-
+from app.models.payment import (
+    Payment,
+    PaymentMethod,
+    PaymentStatus,
+)
 from app.models.product_variant import ProductVariant
 from app.models.user import User
 
@@ -140,7 +144,36 @@ def update_order_status(
                     created_by=admin.id,
                 )
             )
+    payment = (
+        db.query(Payment)
+        .filter(
+            Payment.order_id == order.id
+        )
+        .first()
+    )
 
+    if payment is not None:
+        if (
+            status ==
+            OrderStatus.CANCELLED
+            and payment.payment_status
+            == PaymentStatus.PENDING
+        ):
+            payment.payment_status = (
+                PaymentStatus.FAILED
+            )
+
+        if (
+            status ==
+            OrderStatus.DELIVERED
+            and payment.payment_method
+            == PaymentMethod.COD
+            and payment.payment_status
+            == PaymentStatus.PENDING
+        ):
+            payment.payment_status = (
+                PaymentStatus.SUCCESS
+            )
     order.status = status
 
 

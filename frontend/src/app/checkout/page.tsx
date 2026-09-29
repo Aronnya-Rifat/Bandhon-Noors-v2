@@ -229,6 +229,7 @@ export default function CheckoutPage() {
             address_id: addressId,
             delivery_area:
               deliveryArea,
+            payment_method: "COD",
           },
         );
 

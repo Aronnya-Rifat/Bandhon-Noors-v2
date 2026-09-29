@@ -11,7 +11,11 @@ from app.models.inventory import (
     InventoryTransaction,
     InventoryTransactionType,
 )
-
+from app.models.payment import (
+    Payment,
+    PaymentMethod,
+    PaymentStatus,
+)
 from app.models.user import User
 from app.models.address import CustomerAddress
 from app.schemas.order import OrderCreate
@@ -26,7 +30,13 @@ def create_order(
     """
     Create order from customer cart.
     """
-
+    if (
+        data.payment_method
+        != PaymentMethod.COD
+    ):
+        raise ValueError(
+            "Only Cash on Delivery is currently available"
+        )
 
     customer_cart_items = (
         db.query(CartItem)
@@ -180,13 +190,23 @@ def create_order(
         db.delete(item)
 
 
-    order.subtotal = subtotal
-
     order.total_amount = (
         subtotal +
         delivery_charge
     )
 
+    payment = Payment(
+        order_id=order.id,
+        amount=order.total_amount,
+        payment_method=(
+            data.payment_method
+        ),
+        payment_status=(
+            PaymentStatus.PENDING
+        ),
+    )
+
+    db.add(payment)
 
     db.commit()
     db.refresh(order)

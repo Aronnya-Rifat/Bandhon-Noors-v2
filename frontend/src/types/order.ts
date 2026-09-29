@@ -20,15 +20,17 @@ export type OrderStatus =
 
 
 /**
- * Payment status.
+ * Delivery area.
  */
 export type DeliveryArea =
   | "DHAKA"
   | "OUTSIDE";
-
+export type PaymentMethod =
+  | "COD";
 export interface OrderCreate {
   address_id: number;
   delivery_area: DeliveryArea;
+  payment_method: PaymentMethod;
 }
 
 export interface OrderItem {

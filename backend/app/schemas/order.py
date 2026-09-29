@@ -2,7 +2,9 @@ from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel
-
+from app.models.payment import (
+    PaymentMethod,
+)
 
 
 class OrderStatus(str, Enum):
@@ -39,7 +41,9 @@ class OrderCreate(BaseModel):
     address_id: int
     
     delivery_area: DeliveryArea
-
+    payment_method: PaymentMethod = (
+        PaymentMethod.COD
+    )
 
 
 class OrderItemResponse(BaseModel):
