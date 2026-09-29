@@ -72,7 +72,7 @@ export default function WishlistPage() {
               >
                 <div
                   className="
-                          aspect-square
+                          aspect-[4/5]
                           overflow-hidden
                           rounded-2xl
                           bg-pink-50
@@ -81,7 +81,7 @@ export default function WishlistPage() {
                   <StoreImage
                     src={item.image}
                     alt={item.name}
-                    width={500}
+                    width={400}
                     height={500}
                     className="
                             w-full

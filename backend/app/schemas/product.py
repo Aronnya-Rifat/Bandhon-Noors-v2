@@ -133,7 +133,16 @@ class ProductListResponse(BaseModel):
     
     class Config:
         from_attributes = True
+class ProductPageResponse(BaseModel):
+    items: list[ProductListResponse]
 
+    total: int
+
+    page: int
+
+    page_size: int
+
+    total_pages: int
 class ProductMediaPublic(BaseModel):
     """
     Public product image response.
@@ -195,3 +204,9 @@ class ProductDetailResponse(ProductListResponse):
 
     class Config:
         from_attributes = True
+        
+        
+class ProductFilterOptions(BaseModel):
+    sizes: list[str]
+
+    colors: list[str]

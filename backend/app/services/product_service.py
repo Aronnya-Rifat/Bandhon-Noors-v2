@@ -256,6 +256,8 @@ def get_product_cards(
     sort: str | None = None,
     size: str | None = None,
     color: str | None = None,
+    page: int = 1,
+    page_size: int = 24,
 ):
     """
     Return lightweight product data
@@ -293,7 +295,13 @@ def get_product_cards(
         )
 
         if main_category is None:
-            return []
+            return {
+                "items": [],
+                "total": 0,
+                "page": 1,
+                "page_size": page_size,
+                "total_pages": 1,
+            }
 
         category_ids = get_category_with_children(
             db,
@@ -322,7 +330,13 @@ def get_product_cards(
         selected_subcategory = subcategory_query.first()
 
         if selected_subcategory is None:
-            return []
+            return {
+                "items": [],
+                "total": 0,
+                "page": 1,
+                "page_size": page_size,
+                "total_pages": 1,
+            }
 
         products_query = products_query.filter(
             Product.category_id == selected_subcategory.id
@@ -398,8 +412,47 @@ def get_product_cards(
             )
         )
 
-    products = products_query.all()
-    return [_product_card_data(product) for product in products]
+    total = products_query.count()
+
+    total_pages = max(
+        1,
+        (
+            total
+            + page_size
+            - 1
+        )
+        // page_size,
+    )
+
+    safe_page = min(
+        page,
+        total_pages,
+    )
+
+    products = (
+        products_query
+        .offset(
+            (
+                safe_page - 1
+            )
+            * page_size
+        )
+        .limit(page_size)
+        .all()
+    )
+
+    return {
+        "items": [
+            _product_card_data(
+                product
+            )
+            for product in products
+        ],
+        "total": total,
+        "page": safe_page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 def get_product(
@@ -620,3 +673,69 @@ def get_products_by_category(
 
     return [_product_card_data(product) for product in products]
    
+def get_product_filter_options(
+    db: Session,
+) -> dict:
+    """
+    Return size and color values used by
+    active, in-stock product variants.
+    """
+
+    size_rows = (
+        db.query(
+            ProductVariant.size
+        )
+        .join(
+            Product,
+            Product.id
+            == ProductVariant.product_id,
+        )
+        .filter(
+            Product.is_active == True,
+            ProductVariant.stock_quantity > 0,
+            ProductVariant.size.is_not(
+                None
+            ),
+            ProductVariant.size != "",
+        )
+        .distinct()
+        .order_by(
+            ProductVariant.size.asc()
+        )
+        .all()
+    )
+
+    color_rows = (
+        db.query(
+            ProductVariant.color_theme
+        )
+        .join(
+            Product,
+            Product.id
+            == ProductVariant.product_id,
+        )
+        .filter(
+            Product.is_active == True,
+            ProductVariant.stock_quantity > 0,
+            ProductVariant.color_theme.is_not(
+                None
+            ),
+            ProductVariant.color_theme != "",
+        )
+        .distinct()
+        .order_by(
+            ProductVariant.color_theme.asc()
+        )
+        .all()
+    )
+
+    return {
+        "sizes": [
+            size
+            for (size,) in size_rows
+        ],
+        "colors": [
+            color
+            for (color,) in color_rows
+        ],
+    }

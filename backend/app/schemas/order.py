@@ -5,6 +5,9 @@ from pydantic import BaseModel
 from app.models.payment import (
     PaymentMethod,
 )
+from app.schemas.payment import (
+    PaymentResponse,
+)
 
 
 class OrderStatus(str, Enum):
@@ -91,6 +94,7 @@ class OrderResponse(BaseModel):
 
     items: list[OrderItemResponse]
 
+    payment: PaymentResponse | None = None
 
     created_at: datetime
 

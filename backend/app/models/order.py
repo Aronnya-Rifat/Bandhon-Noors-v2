@@ -92,7 +92,12 @@ class Order(Base):
         cascade="all, delete-orphan",
     )
 
-
+    payment = relationship(
+        "Payment",
+        back_populates="order",
+        uselist=False,
+    )
+    
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,

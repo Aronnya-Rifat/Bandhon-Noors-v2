@@ -12,6 +12,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
+    relationship,
 )
 
 from app.models.base import Base
@@ -57,6 +58,10 @@ class Payment(Base):
     order_id: Mapped[int] = mapped_column(
         ForeignKey("orders.id"),
         nullable=False,
+    )
+    order = relationship(
+        "Order",
+        back_populates="payment",
     )
 
 

@@ -1,4 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session,
+    selectinload,
+)
 
 from app.models.order import (
     Order,
@@ -26,6 +29,14 @@ def get_all_orders(
 
     return (
         db.query(Order)
+        .options(
+            selectinload(
+                Order.items
+            ),
+            selectinload(
+                Order.payment
+            ),
+        )
         .order_by(
             Order.created_at.desc()
         )
@@ -44,6 +55,14 @@ def get_order_by_id(
 
     order = (
         db.query(Order)
+        .options(
+            selectinload(
+                Order.items
+            ),
+            selectinload(
+                Order.payment
+            ),
+        )
         .filter(
             Order.id == order_id
         )

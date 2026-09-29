@@ -20,6 +20,8 @@ from app.schemas.product import (
     ProductDetailResponse,
     ProductResponse,
     ProductListResponse,
+    ProductPageResponse,
+    ProductFilterOptions,
 )
 
 from app.services.product_service import (
@@ -33,6 +35,7 @@ from app.services.product_service import (
     get_featured_products,
     get_products_by_category,
     get_admin_products,
+    get_product_filter_options,
 )
 router = APIRouter(
     tags=["Products"],
@@ -101,7 +104,7 @@ def create(
 
 @router.get(
     "/products",
-    response_model=list[ProductListResponse],
+    response_model=ProductPageResponse,
 )
 def list_products(
     category: str | None = None,
@@ -110,6 +113,15 @@ def list_products(
     sort: str | None = None,
     size: str | None = None,
     color: str | None = None,
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=24,
+        ge=1,
+        le=48,
+    ),
     db: Session = Depends(get_db),
 ):
     return get_product_cards(
@@ -120,6 +132,8 @@ def list_products(
         sort=sort,
         size=size,
         color=color,
+        page=page,
+        page_size=page_size,
     )
 
 @router.get(
@@ -168,7 +182,16 @@ def featured_products(
     return get_featured_products(
         db=db,
     )
-    
+@router.get(
+    "/products/filter-options",
+    response_model=ProductFilterOptions,
+)
+def product_filter_options(
+    db: Session = Depends(get_db),
+):
+    return get_product_filter_options(
+        db=db,
+    )    
 @router.get(
     "/products/{product_id}",
     response_model=ProductDetailResponse,

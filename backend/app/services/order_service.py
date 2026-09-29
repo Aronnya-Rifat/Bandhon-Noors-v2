@@ -1,4 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session,
+    selectinload,
+)
 from decimal import Decimal
 from app.models.cart import Cart, CartItem
 from app.models.order import (
@@ -223,6 +226,14 @@ def get_customer_orders(
 
     return (
         db.query(Order)
+        .options(
+            selectinload(
+                Order.items
+            ),
+            selectinload(
+                Order.payment
+            ),
+        )
         .filter(
             Order.customer_id == customer.id
         )
@@ -245,6 +256,14 @@ def get_customer_order(
 
     order = (
         db.query(Order)
+        .options(
+            selectinload(
+                Order.items
+            ),
+            selectinload(
+                Order.payment
+            ),
+        )
         .filter(
             Order.id == order_id,
             Order.customer_id == customer.id,
