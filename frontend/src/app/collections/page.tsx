@@ -23,7 +23,13 @@ import { getMainCategories } from "@/services/category-service";
 import { getCollectionPreviewProducts } from "@/services/product-service";
 
 export default async function CollectionsPage() {
-  const categories = await getMainCategories();
+  const categories = (
+      await getMainCategories()
+    ).sort(
+      (firstCategory, secondCategory) =>
+        firstCategory.id -
+        secondCategory.id,
+    );
 
   const collections = await Promise.all(
     categories.map(async (category) => ({

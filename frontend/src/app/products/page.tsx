@@ -12,7 +12,10 @@
 
 import ProductListing from "@/components/product/ProductListing";
 
-import { getProducts } from "@/services/product-service";
+import {
+  getProductFilterOptions,
+  getProducts,
+} from "@/services/product-service";
 
 import { getCategories } from "@/services/category-service";
 
@@ -24,6 +27,7 @@ interface ProductsPageProps {
     sort?: string;
     size?: string;
     color?: string;
+    page?: string;
   }>;
 }
 
@@ -39,23 +43,42 @@ export default async function ProductsPage({
   const query = params.query;
 
   const sort = params.sort;
-    
-  const size = params.size;
 
-  
+  const categoriesWithSizes = new Set(["women", "men", "baby"]);
+
+  const size =
+    category && categoriesWithSizes.has(category) ? params.size : undefined;
+
   const color = params.color;
 
-  const products = await getProducts({
-    category,
-    subcategory,
-    query,
-    sort,
-    size,
-    color,
-  });
+  const requestedPage = Number(params.page);
 
-  const categories = await getCategories();
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
+  const [productPage, categories, filterOptions] = await Promise.all([
+    getProducts({
+      category,
+      subcategory,
+      query,
+      sort,
+      size,
+      color,
+      page,
+    }),
+    getCategories(),
+    getProductFilterOptions(),
+  ]);
+  const selectedCategoryData = categories.find(
+    (item) => item.parent_id === null && item.slug === category,
+  );
+
+  const selectedSubcategoryData = categories.find(
+    (item) => item.parent_id !== null && item.slug === subcategory,
+  );
+
+  const collectionName =
+    selectedSubcategoryData?.name ?? selectedCategoryData?.name;
   return (
     <main
       className="
@@ -88,17 +111,18 @@ export default async function ProductsPage({
           "
         >
           {query
-          ? `Search results for “${query}”`
-          : subcategory
-            ? `${subcategory} Collection`
-            : category
-              ? `${category} Collection`
+            ? `Search results for “${query}”`
+            : collectionName
+              ? `${collectionName} Collections`
               : "All Products"}
         </h1>
       </div>
 
       <ProductListing
-        products={products}
+        products={productPage.items}
+        currentPage={productPage.page}
+        totalPages={productPage.total_pages}
+        totalProducts={productPage.total}
         categories={categories}
         selectedCategory={category ?? ""}
         selectedSubcategory={subcategory ?? ""}
@@ -107,6 +131,8 @@ export default async function ProductsPage({
         selectedSize={size ?? ""}
         selectedColor={color ?? ""}
         layout="catalogue"
+        availableSizes={filterOptions.sizes}
+        availableColors={filterOptions.colors}
       />
     </main>
   );

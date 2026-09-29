@@ -40,6 +40,9 @@ interface ProductFiltersProps {
   onSizeChange: (value: string) => void;
 
   onColorChange: (value: string) => void;
+  sizes: string[];
+
+  colors: string[];
 }
 
 export default function ProductFilters({
@@ -60,14 +63,16 @@ export default function ProductFilters({
   onSizeChange,
 
   onColorChange,
+  sizes,
+
+  colors,
 }: ProductFiltersProps) {
   const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
 
   useEffect(() => {
     const activeMainCategory = categories.find(
       (category) =>
-        category.parent_id === null &&
-        category.slug === selectedCategory,
+        category.parent_id === null && category.slug === selectedCategory,
     );
 
     setExpandedCategory(activeMainCategory?.id ?? null);
@@ -94,10 +99,6 @@ export default function ProductFilters({
   function handleSubCategory(subSlug: string) {
     onSubcategoryChange(subSlug);
   }
-
-  const sizes = ["S", "M", "L", "XL"];
-
-  const colors = ["Pink", "Blue", "White", "Black"];
 
   return (
     <aside
@@ -211,57 +212,34 @@ export default function ProductFilters({
 
       {/* SIZE */}
 
-      <div>
-        <h3
-          className="
-            font-medium
-            text-gray-800
-          "
-        >
-          Size
-        </h3>
+      {sizes.length > 0 && (
+        <div>
+          <h3 className="font-medium text-gray-800">Size</h3>
 
-        <div
-          className="
-            mt-4
-            space-y-3
-          "
-        >
-          {" "}
-          <label
-            className="
-              flex
-              gap-3
-              text-gray-600
-            "
-          >
-            <input
-              type="radio"
-              checked={selectedSize === ""}
-              onChange={() => onSizeChange("")}
-            />
-            All sizes
-          </label>
-          {sizes.map((size) => (
-            <label
-              key={size}
-              className="
-                    flex
-                    gap-3
-                    text-gray-600
-                  "
-            >
+          <div className="mt-4 space-y-3">
+            <label className="flex gap-3 text-gray-600">
               <input
                 type="radio"
-                checked={selectedSize === size}
-                onChange={() => onSizeChange(size)}
+                checked={selectedSize === ""}
+                onChange={() => onSizeChange("")}
               />
-
-              {size}
+              All sizes
             </label>
-          ))}
+
+            {sizes.map((size) => (
+              <label key={size} className="flex gap-3 text-gray-600">
+                <input
+                  type="radio"
+                  checked={selectedSize === size}
+                  onChange={() => onSizeChange(size)}
+                />
+
+                {size}
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* COLOR */}
 

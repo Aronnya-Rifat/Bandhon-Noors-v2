@@ -22,8 +22,9 @@ import type {
   ProductCardProduct,
   ProductDetail,
   ProductDetailResponse,
+  ProductPage,
+  ProductFilterOptions,
 } from "@/types/product";
-
 
 
 /**
@@ -40,6 +41,8 @@ export async function getProducts(
     sort?: string;
     size?: string;
     color?: string;
+    page?: number;
+    pageSize?: number;
   }
 ) {
 
@@ -90,7 +93,17 @@ export async function getProducts(
       params.color
     );
   }
+  if (params?.page) {
+    searchParams.set(
+      "page",
+      String(params.page),
+    );
+  }
 
+  searchParams.set(
+    "page_size",
+    String(params?.pageSize ?? 24),
+  );
 
   const url =
     searchParams.toString()
@@ -98,9 +111,17 @@ export async function getProducts(
       : "/products";
 
 
-  const products = await apiRequest<ProductCardProduct[]>(url);
+  const response =
+    await apiRequest<ProductPage>(
+      url,
+    );
 
-  return products.map(mapProductCard);
+  return {
+    ...response,
+    items: response.items.map(
+      mapProductCard,
+    ),
+  };
 }
 
 
@@ -177,4 +198,10 @@ export async function getCollectionPreviewProducts(
     4
   );
 
+}
+
+export function getProductFilterOptions(): Promise<ProductFilterOptions> {
+  return apiRequest<ProductFilterOptions>(
+    "/products/filter-options",
+  );
 }

@@ -137,3 +137,17 @@ export interface ProductDetail
   extends Omit<ProductDetailResponse, "media"> {
   images: ProductMedia[];
 }
+
+
+export interface ProductPage {
+  items: ProductCardProduct[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface ProductFilterOptions {
+  sizes: string[];
+  colors: string[];
+}

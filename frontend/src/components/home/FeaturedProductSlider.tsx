@@ -1,50 +1,67 @@
 "use client";
 
+import {
+  Autoplay,
+  Navigation,
+} from "swiper/modules";
+import {
+  Swiper,
+  SwiperSlide,
+} from "swiper/react";
+
 import ProductCard from "@/components/product/ProductCard";
+import type {
+  ProductCardProduct,
+} from "@/types/product";
 
+import "swiper/css";
+import "swiper/css/navigation";
 
-interface FeaturedProductsSliderProps {
-  products: any[];
+interface FeaturedProductSliderProps {
+  products: ProductCardProduct[];
 }
 
-
-export default function FeaturedProductsSlider({
+export default function FeaturedProductSlider({
   products,
-}: FeaturedProductsSliderProps) {
-
+}: FeaturedProductSliderProps) {
   return (
-    <div
-      className="
-        flex
-        gap-6
-        overflow-x-auto
-        scroll-smooth
-        snap-x
-        snap-mandatory
-        scrollbar-hide
-      "
+    <Swiper
+      modules={[
+        Navigation,
+        Autoplay,
+      ]}
+      autoplay={{
+        delay: 3000,
+        disableOnInteraction: false,
+      }}
+      navigation
+      spaceBetween={24}
+      slidesPerView={2}
+      breakpoints={{
+        768: {
+          slidesPerView: 3,
+        },
+
+        1024: {
+          slidesPerView: 4,
+        },
+
+        1280: {
+          slidesPerView: 5,
+        },
+      }}
     >
-
-      {products.map((product) => (
-
-        <div
-          key={product.id}
-          className="
-            min-w-[75%]
-            sm:min-w-[45%]
-            lg:min-w-[23%]
-            snap-start
-          "
-        >
-
-          <ProductCard
-            product={product}
-          />
-
-        </div>
-
-      ))}
-
-    </div>
+      {products.map(
+        (product) => (
+          <SwiperSlide
+            key={product.id}
+          >
+            <ProductCard
+              product={product}
+            />
+          </SwiperSlide>
+        ),
+      )}
+    </Swiper>
   );
 }

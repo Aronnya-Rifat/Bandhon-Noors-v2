@@ -33,7 +33,7 @@ interface ProductListingProps {
   }[];
 
   selectedCategory: string;
-    
+
   selectedSubcategory: string;
 
   initialSearch?: string;
@@ -45,6 +45,15 @@ interface ProductListingProps {
   selectedColor?: string;
 
   layout?: "collection" | "catalogue";
+
+  currentPage: number;
+
+  totalPages: number;
+
+  totalProducts: number;
+  availableSizes: string[];
+
+  availableColors: string[];
 }
 export default function ProductListing({
   products,
@@ -64,14 +73,28 @@ export default function ProductListing({
   selectedColor = "",
 
   layout = "collection",
+
+  currentPage,
+
+  totalPages,
+
+  totalProducts,
+  availableSizes,
+
+  availableColors,
 }: ProductListingProps) {
   const [search, setSearch] = useState(initialSearch);
 
   useEffect(() => {
     setSearch(initialSearch);
   }, [initialSearch]);
- 
+
   const router = useRouter();
+  const categoriesWithSizes = new Set(["women", "men", "baby"]);
+
+  const showSizeFilter = categoriesWithSizes.has(selectedCategory);
+
+  const visibleSizes = showSizeFilter ? availableSizes : [];
 
   function navigateToProducts(
     overrides: {
@@ -81,6 +104,7 @@ export default function ProductListing({
       sort?: string;
       size?: string;
       color?: string;
+      page?: number;
     } = {},
   ) {
     const category = overrides.category ?? selectedCategory;
@@ -89,6 +113,7 @@ export default function ProductListing({
     const sort = overrides.sort ?? selectedSort;
     const size = overrides.size ?? selectedSize;
     const color = overrides.color ?? selectedColor;
+    const page = overrides.page ?? currentPage;
 
     const searchParams = new URLSearchParams();
 
@@ -115,48 +140,60 @@ export default function ProductListing({
     if (color) {
       searchParams.set("color", color);
     }
-
+    if (page > 1) {
+      searchParams.set("page", String(page));
+    }
     const queryString = searchParams.toString();
 
-    router.push(
-      queryString
-        ? `/products?${queryString}`
-        : "/products",
-    );
+    router.push(queryString ? `/products?${queryString}` : "/products");
   }
 
-  function changeCategory(value: string) {
+  function changeCategory(
+    value: string,
+  ) {
     navigateToProducts({
       category: value,
       subcategory: "",
+      size:
+        categoriesWithSizes.has(
+          value,
+        )
+          ? selectedSize
+          : "",
+      page: 1,
     });
   }
   function changeSize(value: string) {
     navigateToProducts({
       size: value,
+      page: 1,
     });
   }
 
   function changeColor(value: string) {
     navigateToProducts({
       color: value,
+      page: 1,
     });
   }
   function changeSubcategory(value: string) {
     navigateToProducts({
       subcategory: value,
+      page: 1,
     });
   }
 
   function submitSearch() {
     navigateToProducts({
       query: search,
+      page: 1,
     });
   }
 
   function changeSort(value: string) {
     navigateToProducts({
       sort: value,
+      page: 1,
     });
   }
   const [showFilters, setShowFilters] = useState(false);
@@ -186,6 +223,8 @@ export default function ProductListing({
           selectedColor={selectedColor}
           onSizeChange={changeSize}
           onColorChange={changeColor}
+          sizes={availableSizes}
+          colors={availableColors}
         />
       </div>
 
@@ -194,7 +233,10 @@ export default function ProductListing({
           lg:col-span-3
         "
       >
-         <ProductToolbar
+        <p className="mb-5 text-sm text-gray-500">
+          {totalProducts === 1 ? "1 product" : `${totalProducts} products`}
+        </p>
+        <ProductToolbar
           search={search}
           sort={selectedSort}
           onSearchChange={setSearch}
@@ -203,7 +245,7 @@ export default function ProductListing({
           onFilterClick={() => setShowFilters(true)}
         />
 
-          {products.length === 0 ? (
+        {products.length === 0 ? (
           <p
             className="
                 text-gray-500
@@ -237,6 +279,41 @@ export default function ProductListing({
           </div>
         )}
       </div>
+      {totalProducts > 0 && totalPages > 1 && (
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-pink-100 pt-6">
+          <p className="text-sm text-gray-500">
+            Page {currentPage} of {totalPages}
+          </p>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() =>
+                navigateToProducts({
+                  page: currentPage - 1,
+                })
+              }
+              className="border border-pink-200 bg-white px-5 py-2 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() =>
+                navigateToProducts({
+                  page: currentPage + 1,
+                })
+              }
+              className="border border-pink-200 bg-white px-5 py-2 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {showFilters && (
         <div
@@ -297,6 +374,8 @@ export default function ProductListing({
               selectedColor={selectedColor}
               onSizeChange={changeSize}
               onColorChange={changeColor}
+              sizes={availableSizes}
+              colors={availableColors}
             />
           </div>
         </div>

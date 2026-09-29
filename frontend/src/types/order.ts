@@ -26,7 +26,15 @@ export type DeliveryArea =
   | "DHAKA"
   | "OUTSIDE";
 export type PaymentMethod =
-  | "COD";
+  | "COD"
+  | "CARD"
+  | "MOBILE_BANKING";
+
+export type PaymentStatus =
+  | "PENDING"
+  | "SUCCESS"
+  | "FAILED"
+  | "REFUNDED";
 export interface OrderCreate {
   address_id: number;
   delivery_area: DeliveryArea;
@@ -52,6 +60,20 @@ export interface Order {
   total_amount: number;
   shipping_address: string;
   items: OrderItem[];
+  payment: Payment | null;
   created_at: string;
   updated_at: string;
+
+
+}
+
+
+export interface Payment {
+  id: number;
+  order_id: number;
+  amount: number;
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  transaction_id: string | null;
+  created_at: string;
 }

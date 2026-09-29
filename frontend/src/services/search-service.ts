@@ -14,7 +14,11 @@ export async function searchProducts(
     return [];
   }
 
-  return getProducts({
-    query: normalizedQuery,
-  });
+  const response =
+    await getProducts({
+      query: normalizedQuery,
+      pageSize: 4,
+    });
+
+  return response.items;
 }
