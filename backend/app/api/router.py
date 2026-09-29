@@ -26,6 +26,13 @@ from app.routes.admin_homepage import router as admin_homepage_router
 from app.routes.admin_customers import (
     router as admin_customers_router,
 )
+from app.routes.chat import (
+    router as chat_router,
+)
+from app.routes.admin_chat import (
+    router as admin_chat_router,
+)
+
 
 
 
@@ -121,3 +128,12 @@ api_router.include_router(
 api_router.include_router(
     admin_customers_router,
 )
+
+api_router.include_router(
+    chat_router,
+)
+
+api_router.include_router(
+    admin_chat_router,
+)
+

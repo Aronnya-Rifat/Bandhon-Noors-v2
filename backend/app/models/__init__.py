@@ -32,3 +32,10 @@ from app.models.order import (
 from app.models.payment import Payment
 from app.models.address import CustomerAddress
 from app.models.homepage import HomepageContent
+
+from app.models.chat import (
+    ChatConversation,
+    ChatConversationStatus,
+    ChatMessage,
+    ChatSenderType,
+)
