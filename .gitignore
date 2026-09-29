@@ -1,0 +1,32 @@
+# Frontend
+frontend/node_modules/
+frontend/.next/
+
+# Python
+.venv/
+backend/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Environment
+.env
+.env.*
+*.env
+
+# Generated backend files
+backend/*.egg-info/
+backend/**/*.egg-info/
+
+# Media/uploads
+backend/uploads/
+uploads/
+media/
+
+# Build/cache
+.next/
+dist/
+build/
+
+# Archives
+*.zip

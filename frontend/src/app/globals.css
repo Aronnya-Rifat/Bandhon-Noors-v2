@@ -1,0 +1,153 @@
+/*
+  Bandhon Noors
+  Global Design System
+
+  Premium traditional fashion theme
+*/
+
+
+@import "tailwindcss";
+
+
+:root {
+
+  /*
+    Brand Colors
+  */
+
+  --color-primary:
+    #F6B6C8;
+
+  --color-background:
+    #FFFFFF;
+
+  --color-soft:
+    #FCE4EC;
+
+  --color-heritage:
+    #F3E6D8;
+
+  --color-accent:
+    #D98FA8;
+
+  --color-text:
+    #6F6F6F;
+
+
+  /*
+    Typography
+  */
+
+  --font-heading:
+    "Playfair Display",
+    serif;
+
+  --font-body:
+    "Inter",
+    sans-serif;
+
+
+  /*
+    Layout
+  */
+
+  --container-width:
+    1280px;
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+
+html {
+
+  scroll-behavior:
+    smooth;
+
+}
+
+
+body {
+
+  margin: 0;
+
+  background:
+    var(--color-background);
+
+  color:
+    var(--color-text);
+
+  font-family:
+    var(--font-body);
+
+}
+
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+
+  font-family:
+    var(--font-heading);
+
+
+}
+
+
+a {
+
+  text-decoration:
+    none;
+
+}
+
+
+button {
+
+  cursor:
+    pointer;
+
+}
+
+
+.container {
+
+  width:
+    100%;
+
+  max-width:
+    var(--container-width);
+
+  margin-left:
+    auto;
+
+  margin-right:
+    auto;
+
+  padding-left:
+    1rem;
+
+  padding-right:
+    1rem;
+
+}
+
+
+/*
+  Selection Color
+*/
+
+::selection {
+
+  background:
+    var(--color-primary);
+
+  color:
+    #ffffff;
+
+}
