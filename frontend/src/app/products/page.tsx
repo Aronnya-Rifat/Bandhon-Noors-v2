@@ -22,6 +22,8 @@ interface ProductsPageProps {
     subcategory?: string;
     query?: string;
     sort?: string;
+    size?: string;
+    color?: string;
   }>;
 }
 
@@ -37,15 +39,19 @@ export default async function ProductsPage({
   const query = params.query;
 
   const sort = params.sort;
+    
+  const size = params.size;
+
+  
+  const color = params.color;
 
   const products = await getProducts({
     category,
-
     subcategory,
-
     query,
-
     sort,
+    size,
+    color,
   });
 
   const categories = await getCategories();
@@ -81,7 +87,9 @@ export default async function ProductsPage({
             text-[#3F312B]
           "
         >
-          {subcategory
+          {query
+          ? `Search results for “${query}”`
+          : subcategory
             ? `${subcategory} Collection`
             : category
               ? `${category} Collection`
@@ -94,6 +102,10 @@ export default async function ProductsPage({
         categories={categories}
         selectedCategory={category ?? ""}
         selectedSubcategory={subcategory ?? ""}
+        initialSearch={query ?? ""}
+        selectedSort={sort ?? ""}
+        selectedSize={size ?? ""}
+        selectedColor={color ?? ""}
         layout="catalogue"
       />
     </main>

@@ -21,7 +21,7 @@ interface WishlistStore {
 
   addItem: (item: WishlistItem) => void;
 
-  removeItem: (id: number) => void;
+  removeItem: (productId: number) => void;
 
   clearWishlist: () => void;
 }
@@ -33,15 +33,38 @@ create<WishlistStore>()(
     (set) => ({
   items: [],
 
-  addItem: (item) =>
-    set((state) => ({
-      items: [...state.items, item],
-    })),
+addItem: (item) =>
+  set((state) => {
+    const alreadyExists = state.items.some(
+      (wishlistItem) =>
+        wishlistItem.product_id === item.product_id,
+    );
 
-  removeItem: (id) =>
-    set((state) => ({
-      items: state.items.filter((item) => item.id !== id),
-    })),
+    if (alreadyExists) {
+      return {
+        items: state.items.map((wishlistItem) =>
+          wishlistItem.product_id === item.product_id
+            ? {
+                ...wishlistItem,
+                ...item,
+                id: wishlistItem.id,
+              }
+            : wishlistItem,
+        ),
+      };
+    }
+
+    return {
+      items: [...state.items, item],
+    };
+  }),
+
+removeItem: (productId) =>
+  set((state) => ({
+    items: state.items.filter(
+      (item) => item.product_id !== productId,
+    ),
+  })),
 
   clearWishlist: () =>
     set({

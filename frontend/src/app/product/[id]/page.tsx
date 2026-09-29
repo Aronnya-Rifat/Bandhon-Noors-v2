@@ -16,15 +16,16 @@
  */
 
 import { notFound } from "next/navigation";
-
-import { getProductById } from "@/services/product-service";
+import { ApiError } from "@/lib/api";
 import ProductPurchase from "@/components/product/ProductPurchase";
 import ProductInfo from "@/components/product/ProductInfo";
 import ProductGallery from "@/components/product/ProductGallery";
 import ProductReviews from "@/components/review/ProductReviews";
 import RelatedProducts from "@/components/product/RelatedProducts";
-
-import { getProducts } from "@/services/product-service";
+import {
+  getProductById,
+  getProductsByCategory,
+} from "@/services/product-service";
 import { productReviews } from "@/data/product-reviews";
 
 interface ProductPageProps {
@@ -36,16 +37,32 @@ interface ProductPageProps {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
-  const product = await getProductById(Number(id));
-  const allProducts = await getProducts();
+  const productId = Number(id);
 
-  const relatedProducts = allProducts
-    .filter((item) => item.id !== Number(id))
-    .slice(0, 4);
-
-  if (!product) {
+  if (!Number.isInteger(productId) || productId <= 0) {
     notFound();
   }
+
+  const product = await getProductById(productId).catch(
+    (error: unknown) => {
+      if (
+        error instanceof ApiError &&
+        error.status === 404
+      ) {
+        notFound();
+      }
+
+      throw error;
+    },
+  );
+
+  const categoryProducts = await getProductsByCategory(
+    product.category_id,
+  );
+
+  const relatedProducts = categoryProducts
+    .filter((item) => item.id !== product.id)
+    .slice(0, 4);
 
   return (
     <main

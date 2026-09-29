@@ -103,6 +103,11 @@ def register_user(
             AdminInvitation.email == data.email,
             AdminInvitation.status
             == AdminInvitationStatus.APPROVED,
+            AdminInvitation.expires_at
+            > datetime.utcnow(),
+        )
+        .order_by(
+            AdminInvitation.approved_at.desc()
         )
         .first()
     )

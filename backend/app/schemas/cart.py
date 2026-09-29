@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from pydantic import BaseModel, Field
 
 
@@ -26,29 +24,50 @@ class CartItemUpdate(BaseModel):
         ge=1,
     )
 
-
-
-class CartItemResponse(BaseModel):
+class CartProductResponse(BaseModel):
     """
-    Cart item response.
+    Product snapshot displayed in the cart.
     """
 
     id: int
 
-    cart_id: int
+    product_code: str
 
-    variant_id: int
+    name: str
+
+    price: float
+
+
+class CartVariantResponse(BaseModel):
+    """
+    Selected product variant.
+    """
+
+    id: int
+
+    variant_code: str
+
+    color_theme: str | None
+
+    size: str | None
+
+    stock_quantity: int
+
+    additional_price: float
+
+
+class CartItemResponse(BaseModel):
+    """
+    Complete cart item response.
+    """
+
+    id: int
 
     quantity: int
 
-    created_at: datetime
+    product: CartProductResponse
 
-    updated_at: datetime
-
-
-    class Config:
-        from_attributes = True
-
+    variant: CartVariantResponse
 
 
 class CartResponse(BaseModel):
@@ -58,14 +77,9 @@ class CartResponse(BaseModel):
 
     id: int
 
-    customer_id: int
+    items: list[CartItemResponse]
 
-    items: list[CartItemResponse] = []
+    total_items: int
 
-    created_at: datetime
+    subtotal: float
 
-    updated_at: datetime
-
-
-    class Config:
-        from_attributes = True

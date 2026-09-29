@@ -15,12 +15,14 @@ from app.models.user import User
 from app.schemas.inventory import (
     InventoryCreate,
     InventoryResponse,
+    InventoryVariantResponse,
 )
 
 from app.services.inventory_service import (
     create_inventory_transaction,
     get_inventory_history,
     get_low_stock_variants,
+    get_inventory_variants
 )
 
 
@@ -28,7 +30,23 @@ router = APIRouter(
     prefix="/admin/inventory",
     tags=["Inventory"],
 )
+@router.get(
+    "/variants",
+    response_model=list[
+        InventoryVariantResponse
+    ],
+)
+def inventory_variants(
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """
+    Return all variants for inventory management.
+    """
 
+    return get_inventory_variants(
+        db=db,
+    )
 
 @router.post(
     "",

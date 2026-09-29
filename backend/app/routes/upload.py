@@ -22,6 +22,7 @@ from app.schemas.media import (
 )
 
 from app.services.file_service import (
+    delete_file,
     save_image,
 )
 
@@ -86,7 +87,8 @@ async def upload_product_image(
                 saved_path
             )
         )
-
+        delete_file(saved_path)
+        
         from app.schemas.media import (
             ProductMediaCreate,
         )

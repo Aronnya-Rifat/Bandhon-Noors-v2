@@ -13,7 +13,7 @@
 import Link from "next/link";
 
 import StoreImage from "@/components/ui/StoreImage";
-
+import { formatCurrency } from "@/lib/utils";
 import { useWishlistStore } from "@/store/wishlist-store";
 
 export default function WishlistPage() {
@@ -65,7 +65,7 @@ export default function WishlistPage() {
                     "
             >
               <Link
-                href={`/products/${item.product_id}`}
+                href={`/product/${item.product_id}`}
                 className="
                         group
                       "
@@ -112,12 +112,14 @@ export default function WishlistPage() {
                           text-pink-500
                         "
                 >
-                  ৳{item.price}
+                  {formatCurrency(item.price)}
                 </p>
               </Link>
 
               <button
-                onClick={() => removeItem(item.id)}
+                type="button"
+                aria-label={`Remove ${item.name} from wishlist`}
+                onClick={() => removeItem(item.product_id)}
                 className="
                         mt-3
                         text-sm

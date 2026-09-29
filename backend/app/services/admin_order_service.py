@@ -4,7 +4,13 @@ from app.models.order import (
     Order,
     OrderStatus,
 )
+from app.models.inventory import (
+    InventoryTransaction,
+    InventoryTransactionType,
+)
 
+from app.models.product_variant import ProductVariant
+from app.models.user import User
 
 
 def get_all_orders(
@@ -55,6 +61,7 @@ def update_order_status(
     db: Session,
     order_id: int,
     status: OrderStatus,
+    admin: User,
 ) -> Order:
     """
     Update order status with transition validation.
@@ -99,7 +106,40 @@ def update_order_status(
             f"from {order.status.value} "
             f"to {status.value}"
         )
+    if status == OrderStatus.CANCELLED:
+        for item in order.items:
+            variant = (
+                db.query(ProductVariant)
+                .filter(
+                    ProductVariant.id
+                    == item.variant_id
+                )
+                .first()
+            )
 
+            if variant is None:
+                raise ValueError(
+                    f"Variant {item.variant_id} not found"
+                )
+
+            variant.stock_quantity += (
+                item.quantity
+            )
+
+            db.add(
+                InventoryTransaction(
+                    variant_id=variant.id,
+                    change_amount=item.quantity,
+                    transaction_type=(
+                        InventoryTransactionType.RETURN
+                    ),
+                    note=(
+                        f"Stock returned from "
+                        f"cancelled order #{order.id}"
+                    ),
+                    created_by=admin.id,
+                )
+            )
 
     order.status = status
 

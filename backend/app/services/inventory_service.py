@@ -110,3 +110,47 @@ def get_low_stock_variants(
         )
         .all()
     )
+    
+    
+def get_inventory_variants(
+    db: Session,
+) -> list[dict]:
+    """
+    Return every product variant with
+    product information and stock levels.
+    """
+
+    variants = (
+        db.query(ProductVariant)
+        .order_by(
+            ProductVariant.product_id,
+            ProductVariant.id,
+        )
+        .all()
+    )
+
+    return [
+        {
+            "variant_id": variant.id,
+            "product_id": (
+                variant.product_id
+            ),
+            "product_name": (
+                variant.product.name
+            ),
+            "variant_code": (
+                variant.variant_code
+            ),
+            "color_theme": (
+                variant.color_theme
+            ),
+            "size": variant.size,
+            "stock_quantity": (
+                variant.stock_quantity
+            ),
+            "low_stock_threshold": (
+                variant.low_stock_threshold
+            ),
+        }
+        for variant in variants
+    ]

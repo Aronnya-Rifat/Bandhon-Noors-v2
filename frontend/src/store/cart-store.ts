@@ -34,6 +34,12 @@ interface CartStore {
 
   items: CartItem[];
 
+  syncedCustomerId: number | null;
+
+  setSyncedCustomerId: (
+    customerId: number | null,
+  ) => void;
+
   setItems: (items: CartItem[]) => void;
 
   addItem: (item: CartItem) => void;
@@ -43,6 +49,8 @@ interface CartStore {
   updateQuantity: (id: number, quantity: number) => void;
 
   clearCart: () => void;
+
+  resetCart: () => void;
 }
 
 export const useCartStore =
@@ -62,6 +70,12 @@ create<CartStore>()(
     }),
 
   items: [],
+  syncedCustomerId: null,
+
+  setSyncedCustomerId: (customerId) =>
+    set({
+      syncedCustomerId: customerId,
+    }),
 
   setItems: (items) =>
     set({
@@ -70,7 +84,8 @@ create<CartStore>()(
   addItem: (item) =>
     set((state) => {
       const existingItem = state.items.find(
-        (cartItem) => cartItem.variant.id === item.variant.id,
+        (cartItem) =>
+          cartItem.variant.id === item.variant.id,
       );
 
       if (existingItem) {
@@ -79,18 +94,30 @@ create<CartStore>()(
             cartItem.variant.id === item.variant.id
               ? {
                   ...cartItem,
-                  quantity: cartItem.quantity + item.quantity,
+                  product: item.product,
+                  variant: item.variant,
+                  quantity: Math.min(
+                    cartItem.quantity + item.quantity,
+                    item.variant.stock_quantity,
+                  ),
                 }
               : cartItem,
           ),
-
           isOpen: true,
         };
       }
 
       return {
-        items: [...state.items, item],
-
+        items: [
+          ...state.items,
+          {
+            ...item,
+            quantity: Math.min(
+              item.quantity,
+              item.variant.stock_quantity,
+            ),
+          },
+        ],
         isOpen: true,
       };
     }),
@@ -106,7 +133,10 @@ create<CartStore>()(
         item.id === id
           ? {
               ...item,
-              quantity,
+              quantity: Math.min(
+                Math.max(quantity, 1),
+                item.variant.stock_quantity,
+              ),
             }
           : item,
       ),
@@ -116,10 +146,16 @@ create<CartStore>()(
     set({
       items: [],
     }),
+    resetCart: () =>
+    set({
+      items: [],
+      syncedCustomerId: null,
+      isOpen: false,
     }),
-
+    }),
+    
     {
-      name: "bandhon-noors-cart",
+       name: "bandhon-noors-cart-v2",
     }
 
   )

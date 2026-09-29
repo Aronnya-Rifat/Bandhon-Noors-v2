@@ -1,12 +1,17 @@
-from datetime import datetime
-
+from datetime import (
+    datetime,
+    timedelta,
+)
+from app.models.user import (
+    User,
+    UserRole,
+)
 from sqlalchemy.orm import Session
 
 from app.models.admin_invitation import (
     AdminInvitation,
     AdminInvitationStatus,
 )
-from app.models.user import User
 
 
 def create_admin_invitation(
@@ -19,7 +24,18 @@ def create_admin_invitation(
 
     Only ADMIN users should access this.
     """
+    existing_user = (
+        db.query(User)
+        .filter(
+            User.email == data.email
+        )
+        .first()
+    )
 
+    if existing_user:
+        raise ValueError(
+            "A user already exists with this email"
+        )
     existing_invitation = (
         db.query(AdminInvitation)
         .filter(
@@ -85,7 +101,10 @@ def approve_admin_invitation(
 
     invitation.approved_by = approved_by.id
 
-    invitation.approved_at = datetime.utcnow()
+    invitation.expires_at = (
+        datetime.utcnow()
+        + timedelta(days=7)
+    )
 
     db.commit()
     db.refresh(invitation)

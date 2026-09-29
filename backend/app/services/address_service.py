@@ -46,8 +46,22 @@ def create_address(
     """
 
 
-    if data.is_default:
+    has_existing_address = (
+        db.query(CustomerAddress.id)
+        .filter(
+            CustomerAddress.customer_id
+            == customer.id
+        )
+        .first()
+        is not None
+    )
 
+    should_be_default = (
+        data.is_default
+        or not has_existing_address
+    )
+
+    if should_be_default:
         clear_default_addresses(
             db=db,
             customer_id=customer.id,
@@ -61,7 +75,7 @@ def create_address(
         address_line=data.address_line,
         city=data.city,
         postal_code=data.postal_code,
-        is_default=data.is_default,
+        is_default=should_be_default,
     )
 
 
@@ -182,7 +196,10 @@ def delete_address(
     address_id: int,
 ) -> CustomerAddress:
     """
-    Delete customer address.
+    Delete a customer address.
+
+    If the default address is deleted,
+    another saved address becomes default.
     """
 
     address = get_address(
@@ -191,8 +208,26 @@ def delete_address(
         address_id=address_id,
     )
 
+    was_default = address.is_default
 
     db.delete(address)
+    db.flush()
+
+    if was_default:
+        replacement = (
+            db.query(CustomerAddress)
+            .filter(
+                CustomerAddress.customer_id
+                == customer.id
+            )
+            .order_by(
+                CustomerAddress.created_at.asc()
+            )
+            .first()
+        )
+
+        if replacement is not None:
+            replacement.is_default = True
 
     db.commit()
 

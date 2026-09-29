@@ -22,7 +22,7 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 
 import StoreImage from "@/components/ui/StoreImage";
-
+import { formatCurrency } from "@/lib/utils";
 import type { ProductCardProduct } from "@/types/product";
 
 import { useWishlistStore } from "@/store/wishlist-store";
@@ -39,7 +39,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const wishlistItems = useWishlistStore((state) => state.items);
 
   const isSaved = wishlistItems.some((item) => item.product_id === product.id);
-
+  const productImage = product.thumbnail_url ?? "/logo.png";
   function handleWishlist(event: React.MouseEvent) {
     event.preventDefault();
 
@@ -58,7 +58,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       price: product.price,
 
-      image: product.thumbnail_url ?? "/images/products/placeholder.jpg",
+      image: productImage,
     });
   }
 
@@ -71,6 +71,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Wishlist Button */}
 
       <button
+        type="button"
         onClick={handleWishlist}
         className="
           absolute
@@ -87,7 +88,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           shadow-sm
           text-rose-500
         "
-        aria-label="Add to wishlist"
+        aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
       >
         <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
       </button>
@@ -109,7 +110,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           "
         >
           <StoreImage
-            src={product.thumbnail_url ?? "/images/products/placeholder.jpg"}
+            src={productImage}
             alt={product.name}
             width={500}
             height={500}
@@ -145,7 +146,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               mt-2
             "
           >
-            ৳{product.price}
+            {formatCurrency(product.price)}
           </p>
         </div>
       </Link>

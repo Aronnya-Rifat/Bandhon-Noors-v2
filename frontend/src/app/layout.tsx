@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import CartProvider from "@/components/cart/CartProvider";
+import AppShell from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
   title: {
@@ -38,15 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-
-        <CartProvider />
-
-        <main>
+        <AppShell>
           {children}
-        </main>
-
-        <Footer />
+        </AppShell>
       </body>
     </html>
   );

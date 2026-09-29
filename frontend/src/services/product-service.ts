@@ -14,13 +14,14 @@
 import { apiRequest } from "@/lib/api";
 
 import {
+  mapProductCard,
   mapProductDetail,
 } from "./product-mapper";
-
 
 import type {
   ProductCardProduct,
   ProductDetail,
+  ProductDetailResponse,
 } from "@/types/product";
 
 
@@ -37,6 +38,8 @@ export async function getProducts(
     subcategory?: string;
     query?: string;
     sort?: string;
+    size?: string;
+    color?: string;
   }
 ) {
 
@@ -67,6 +70,27 @@ export async function getProducts(
     );
   }
 
+  if (params?.sort) {
+    searchParams.set(
+      "sort",
+      params.sort
+    );
+  }
+
+  if (params?.size) {
+    searchParams.set(
+      "size",
+      params.size
+    );
+  }
+
+  if (params?.color) {
+    searchParams.set(
+      "color",
+      params.color
+    );
+  }
+
 
   const url =
     searchParams.toString()
@@ -74,10 +98,9 @@ export async function getProducts(
       : "/products";
 
 
-  return apiRequest<ProductCardProduct[]>(
-    url
-  );
+  const products = await apiRequest<ProductCardProduct[]>(url);
 
+  return products.map(mapProductCard);
 }
 
 
@@ -93,11 +116,9 @@ export async function getProductById(
 ): Promise<ProductDetail> {
 
 
-  const product =
-    await apiRequest<any>(
-      `/products/${id}`
-    );
-
+  const product = await apiRequest<ProductDetailResponse>(
+    `/products/${id}`,
+  );
 
   return mapProductDetail(
     product
@@ -114,22 +135,7 @@ export async function getNewArrivals(): Promise<ProductCardProduct[]> {
     );
 
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://127.0.0.1:8000";
-
-
-  return products.map(
-    (product) => ({
-      ...product,
-
-      thumbnail_url:
-        product.thumbnail_url
-          ? `${API_URL}${product.thumbnail_url}`
-          : null,
-    })
-  );
-
+  return products.map(mapProductCard);
 }
 
 export async function getFeaturedProducts(): Promise<ProductCardProduct[]> {
@@ -140,21 +146,7 @@ export async function getFeaturedProducts(): Promise<ProductCardProduct[]> {
     );
 
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://127.0.0.1:8000";
-
-
-  return products.map(
-    (product) => ({
-      ...product,
-
-      thumbnail_url:
-        product.thumbnail_url
-          ? `${API_URL}${product.thumbnail_url}`
-          : null,
-    })
-  );
+  return products.map(mapProductCard);
 
 }
 export async function getProductsByCategory(
@@ -162,14 +154,11 @@ export async function getProductsByCategory(
 ): Promise<ProductCardProduct[]> {
 
 
-  const products =
-    await getProducts();
-
-
-  return products.filter(
-    (product) =>
-      product.category_id === categoryId
+  const products = await apiRequest<ProductCardProduct[]>(
+    `/products/category/${categoryId}`,
   );
+
+  return products.map(mapProductCard);
 
 }
 export async function getCollectionPreviewProducts(

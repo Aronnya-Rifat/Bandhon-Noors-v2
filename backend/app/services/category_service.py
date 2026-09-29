@@ -22,6 +22,19 @@ def create_category(
         )
         .first()
     )
+    
+    existing_slug = (
+        db.query(Category)
+        .filter(
+            Category.slug == data.slug
+        )
+        .first()
+    )
+
+    if existing_slug:
+        raise ValueError(
+            "Category slug already exists"
+        )
 
     if existing:
         raise ValueError(
@@ -127,6 +140,20 @@ def update_category(
         category.name = data.name
     
     if data.slug is not None:
+        duplicate_slug = (
+            db.query(Category)
+            .filter(
+                Category.slug == data.slug,
+                Category.id != category_id,
+            )
+            .first()
+        )
+
+        if duplicate_slug:
+            raise ValueError(
+                "Category slug already exists"
+            )
+
         category.slug = data.slug
 
     if data.description is not None:
@@ -139,6 +166,36 @@ def update_category(
             category.parent_id = None
 
         else:
+            if data.parent_id == category.id:
+                raise ValueError(
+                    "Category cannot be its own parent"
+                )
+
+            parent = get_category(
+                db,
+                data.parent_id,
+            )
+
+            if parent.parent_id is not None:
+                raise ValueError(
+                    "A subcategory cannot contain another subcategory"
+                )
+
+            has_children = (
+                db.query(Category.id)
+                .filter(
+                    Category.parent_id
+                    == category.id
+                )
+                .first()
+                is not None
+            )
+
+            if has_children:
+                raise ValueError(
+                    "A category with subcategories cannot become a subcategory"
+                )
+
             category.parent_id = data.parent_id
 
     if data.is_active is not None:

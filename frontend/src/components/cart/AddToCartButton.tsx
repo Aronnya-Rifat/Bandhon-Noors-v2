@@ -14,14 +14,14 @@
 
 "use client";
 
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type {
   ProductDetail,
   ProductVariant,
 } from "@/types/product";
-import { useCartStore } from "@/store/cart-store";
+import { useCartActions } from "@/hooks/use-cart-actions";
+import { formatCurrency } from "@/lib/utils";
 
 
 interface AddToCartButtonProps {
@@ -39,73 +39,55 @@ export default function AddToCartButton({
   variant,
 }: AddToCartButtonProps) {
 
+  const [quantity, setQuantity] = useState(1);
 
-  const [quantity, setQuantity] =
-    useState(1);
-  
-  const addItem =
-  useCartStore(
-    (state) => state.addItem
-  );
-
-
-  function handleAddToCart() {
-
-
-    addItem({
-
-    id: Date.now(),
-
-    quantity,
-
-    product: {
-
-        id: product.id,
-
-        product_code:
-        product.product_code,
-
-        name:
-        product.name,
-
-        price:
-        product.price,
-
-    },
-
-
-    variant: {
-
-        id:
-        variant.id,
-
-        variant_code:
-        `VAR-${variant.id}`,
-
-        color_theme:
-        variant.color_theme,
-
-        size:
-        variant.size,
-
-        stock_quantity:
+  useEffect(() => {
+    setQuantity((currentQuantity) =>
+      Math.min(
+        Math.max(currentQuantity, 1),
         variant.stock_quantity,
+      ),
+    );
+  }, [variant.id, variant.stock_quantity]);
 
-    },
+  const additionalPrice =
+    variant.additional_price ?? 0;
 
-});
+  const unitPrice =
+    product.price + additionalPrice;
+  
+  const {
+    addItem,
+    error,
+    isWorking,
+  } = useCartActions();
 
+  async function handleAddToCart() {
+    if (
+      quantity < 1 ||
+      quantity > variant.stock_quantity
+    ) {
+      return;
+    }
 
-    /*
-      Later:
-
-      cartContext.addItem({
-        variant_id: variant.id,
-        quantity
-      })
-
-    */
-
+    await addItem({
+      id: Date.now(),
+      quantity,
+      product: {
+        id: product.id,
+        product_code: product.product_code,
+        name: product.name,
+        price: unitPrice,
+      },
+      variant: {
+        id: variant.id,
+        variant_code: variant.variant_code,
+        color_theme: variant.color_theme,
+        size: variant.size,
+        stock_quantity: variant.stock_quantity,
+        additional_price: additionalPrice,
+      },
+    });
   }
 
 
@@ -129,7 +111,9 @@ export default function AddToCartButton({
         "
       >
 
-        <button
+          <button
+          type="button"
+          aria-label="Decrease quantity"
           onClick={() =>
             setQuantity(
               Math.max(
@@ -156,9 +140,14 @@ export default function AddToCartButton({
 
 
         <button
+          type="button"
+          disabled={quantity >= variant.stock_quantity}
           onClick={() =>
-            setQuantity(
-              quantity + 1
+            setQuantity((currentQuantity) =>
+              Math.min(
+                currentQuantity + 1,
+                variant.stock_quantity,
+              ),
             )
           }
           className="
@@ -167,7 +156,10 @@ export default function AddToCartButton({
             rounded-full
             border
             border-pink-200
+            disabled:cursor-not-allowed
+            disabled:opacity-40
           "
+          aria-label="Increase quantity"
         >
           +
         </button>
@@ -180,24 +172,41 @@ export default function AddToCartButton({
       {/* Button */}
 
       <button
+        type="button"
         onClick={handleAddToCart}
+        disabled={
+          isWorking ||
+          variant.stock_quantity === 0 ||
+          quantity > variant.stock_quantity
+        }
         className="
           mt-6
           w-full
+          rounded-full
+          bg-[#D88C9A]
           px-10
           py-3
-          rounded-full
-         bg-[#D88C9A]
           text-white
-          hover:bg-[#C97B89]
           transition
+          hover:bg-[#C97B89]
+          disabled:cursor-not-allowed
+          disabled:bg-gray-300
         "
       >
-
-        Add to Cart
-
+       {isWorking
+        ? "Adding..."
+        : `Add to Cart — ${formatCurrency(
+            unitPrice * quantity,
+          )}`}
       </button>
-
+      {error && (
+        <p
+          role="alert"
+          className="mt-3 text-sm text-red-600"
+        >
+          {error}
+        </p>
+      )}
 
     </div>
 

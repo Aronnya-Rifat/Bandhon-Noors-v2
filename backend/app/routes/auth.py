@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
+from app.core.dependencies import get_current_user
+from app.models.user import User
 from app.core.database import get_db
 
 from app.schemas.auth import (
@@ -82,3 +83,19 @@ def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),
         )
+        
+@router.get(
+    "/me",
+    response_model=UserResponse,
+)
+def current_user_profile(
+    user: User = Depends(get_current_user),
+):
+    """
+    Return the authenticated user.
+
+    Supports customers, admins,
+    and super admins.
+    """
+
+    return user

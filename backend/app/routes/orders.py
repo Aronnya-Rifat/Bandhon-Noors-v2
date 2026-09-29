@@ -19,10 +19,6 @@ from app.schemas.order import (
 
 from app.services.order_service import (
     create_order,
-)
-
-from app.services.order_service import (
-    create_order,
     get_customer_orders,
     get_customer_order,
 )
@@ -76,6 +72,8 @@ def place_order(
         )
 
     except ValueError as error:
+        db.rollback()
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),

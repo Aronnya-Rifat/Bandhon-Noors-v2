@@ -18,8 +18,8 @@
 
 
 import Link from "next/link";
-
-
+import { siteConfig } from "@/config/site";
+import { useAuthStore } from "@/store/auth-store";
 
 interface MobileMenuProps {
 
@@ -35,30 +35,23 @@ export default function MobileMenu({
   open,
   onClose,
 }: MobileMenuProps) {
+  const user =
+    useAuthStore(
+      (state) => state.user,
+    );
 
+  const accountHref =
+    user?.role === "ADMIN" ||
+    user?.role === "SUPER_ADMIN"
+      ? "/admin"
+      : "/account";
 
-  const navigation =  [
-    {
-      name: "Women",
-      href: "/collections/women",
-    },
-    {
-      name: "Men",
-      href: "/collections/men",
-    },
-    {
-      name: "Kids",
-      href: "/collections/baby",
-    },
-    {
-      name: "Collections",
-      href: "/collections",
-    },
-    {
-      name: "New Arrivals",
-      href: "/products/new-arrivals",
-    },
-  ]
+  const accountLabel =
+    user?.role === "ADMIN" ||
+    user?.role === "SUPER_ADMIN"
+      ? "Admin Dashboard"
+      : "Account";
+
 
 
 
@@ -135,6 +128,8 @@ export default function MobileMenu({
 
 
           <button
+            type="button"
+            aria-label="Close menu"
             onClick={onClose}
             className="
               text-gray-500
@@ -159,7 +154,7 @@ export default function MobileMenu({
         >
 
           {
-            navigation.map(
+            siteConfig.navigation.map(
               (item) => (
 
                 <Link
@@ -200,7 +195,7 @@ export default function MobileMenu({
           >
 
             <Link
-              href="/account"
+              href={accountHref}
               onClick={onClose}
               className="
                 block
@@ -209,7 +204,7 @@ export default function MobileMenu({
               "
             >
 
-              Account
+              {accountLabel}
 
             </Link>
 

@@ -5,8 +5,30 @@
  * into frontend-friendly structures.
  */
 
-import type { ProductDetail, ProductMedia } from "@/types/product";
+import type {
+  ProductCardProduct,
+  ProductDetail,
+  ProductDetailResponse,
+} from "@/types/product";
 
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
+).replace(/\/+$/, "");
+
+function resolveMediaUrl(path: string): string {
+  return new URL(path, `${API_URL}/`).href;
+}
+
+export function mapProductCard(
+  product: ProductCardProduct,
+): ProductCardProduct {
+  return {
+    ...product,
+    thumbnail_url: product.thumbnail_url
+      ? resolveMediaUrl(product.thumbnail_url)
+      : null,
+  };
+}
 /**
  * Convert backend media list
  * into frontend image list.
@@ -17,34 +39,22 @@ import type { ProductDetail, ProductMedia } from "@/types/product";
  * Frontend:
  * images
  */
-export function mapProductDetail(product: any): ProductDetail {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+export function mapProductDetail(
+  product: ProductDetailResponse,
+): ProductDetail {
+  const { media, ...details } = product;
+
   return {
-    id: product.id,
-
-    product_code: product.product_code,
-
-    name: product.name,
-
-    description: product.description,
-
-    price: product.price,
-
-    weight: product.weight,
-
-    size_chart: product.size_chart,
-
-    images:
-      product.media?.map((item: ProductMedia) => ({
-        ...item,
-
-        file_url: `${API_URL}${item.file_url}`,
-
-        thumbnail_url: item.thumbnail_url
-          ? `${API_URL}${item.thumbnail_url}`
-          : null,
-      })) ?? [],
-
-    variants: product.variants ?? [],
+    ...details,
+    thumbnail_url: product.thumbnail_url
+      ? resolveMediaUrl(product.thumbnail_url)
+      : null,
+    images: media.map((item) => ({
+      ...item,
+      file_url: resolveMediaUrl(item.file_url),
+      thumbnail_url: item.thumbnail_url
+        ? resolveMediaUrl(item.thumbnail_url)
+        : null,
+    })),
   };
 }

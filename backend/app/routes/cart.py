@@ -16,14 +16,15 @@ from app.schemas.cart import (
     CartResponse,
     CartItemCreate,
     CartItemUpdate,
-    CartItemResponse,
 )
 
 from app.services.cart_service import (
-    get_cart,
     add_cart_item,
-    update_cart_item,
+    build_cart_response,
+    get_cart,
     remove_cart_item,
+    update_cart_item,
+    clear_cart_items,
 )
 
 
@@ -65,16 +66,18 @@ def view_cart(
 
     require_customer(user)
 
-    return get_cart(
+    cart = get_cart(
         db=db,
         customer=user,
     )
+
+    return build_cart_response(cart)
 
 
 
 @router.post(
     "/items",
-    response_model=CartItemResponse,
+    response_model=CartResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def add_item(
@@ -89,11 +92,18 @@ def add_item(
     require_customer(user)
 
     try:
-        return add_cart_item(
+        add_cart_item(
             db=db,
             customer=user,
             data=data,
         )
+
+        cart = get_cart(
+            db=db,
+            customer=user,
+        )
+
+        return build_cart_response(cart)
 
     except ValueError as error:
         raise HTTPException(
@@ -105,7 +115,7 @@ def add_item(
 
 @router.put(
     "/items/{item_id}",
-    response_model=CartItemResponse,
+    response_model=CartResponse,
 )
 def update_item(
     item_id: int,
@@ -120,13 +130,19 @@ def update_item(
     require_customer(user)
 
     try:
-        return update_cart_item(
+        update_cart_item(
             db=db,
             customer=user,
             item_id=item_id,
             data=data,
         )
 
+        cart = get_cart(
+            db=db,
+            customer=user,
+        )
+
+        return build_cart_response(cart)
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -137,7 +153,7 @@ def update_item(
 
 @router.delete(
     "/items/{item_id}",
-    response_model=CartItemResponse,
+    response_model=CartResponse,
 )
 def delete_item(
     item_id: int,
@@ -151,14 +167,42 @@ def delete_item(
     require_customer(user)
 
     try:
-        return remove_cart_item(
+        remove_cart_item(
             db=db,
             customer=user,
             item_id=item_id,
         )
+
+        cart = get_cart(
+            db=db,
+            customer=user,
+        )
+
+        return build_cart_response(cart)
 
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(error),
         )
+        
+@router.delete(
+    "",
+    response_model=CartResponse,
+)
+def clear_cart(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Remove every item from the current customer's cart.
+    """
+
+    require_customer(user)
+
+    cart = clear_cart_items(
+        db=db,
+        customer=user,
+    )
+
+    return build_cart_response(cart)

@@ -57,10 +57,25 @@ class Order(Base):
         default=OrderStatus.PENDING,
         nullable=False,
     )
+    subtotal: Mapped[float] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
 
+
+    delivery_area: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+    )
+
+
+    delivery_charge: Mapped[float] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
 
     total_amount: Mapped[float] = mapped_column(
-        Numeric(10,2),
+        Numeric(10, 2),
         nullable=False,
     )
 

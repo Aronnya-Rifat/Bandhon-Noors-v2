@@ -19,42 +19,35 @@ import { Heart } from "lucide-react";
 
 import { useWishlistStore } from "@/store/wishlist-store";
 import type { ProductDetail } from "@/types/product";
-
+import { formatCurrency } from "@/lib/utils";
 
 interface ProductInfoProps {
-
   product: ProductDetail;
-
 }
 
+export default function ProductInfo({ product }: ProductInfoProps) {
+  const addItem = useWishlistStore((state) => state.addItem);
+  const removeItem = useWishlistStore((state) => state.removeItem);
 
+  const wishlistItems = useWishlistStore((state) => state.items);
 
-export default function ProductInfo({
-  product,
-}: ProductInfoProps) {
-  const addItem =
-    useWishlistStore(
-      (state) => state.addItem
-    );
+  const isSaved = wishlistItems.some((item) => item.product_id === product.id);
+  function handleWishlist() {
+    if (isSaved) {
+      removeItem(product.id);
+      return;
+    }
 
-
-  const wishlistItems =
-    useWishlistStore(
-      (state) => state.items
-    );
-
-
-  const isSaved =
-    wishlistItems.some(
-      (item) =>
-        item.product_id === product.id
-    );
-
+    addItem({
+      id: Date.now(),
+      product_id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.thumbnail_url ?? "/logo.png",
+    });
+  }
   return (
-
     <div>
-
-
       {/* Product Name */}
 
       <h1
@@ -65,12 +58,8 @@ export default function ProductInfo({
           text-[#3F312B]
         "
       >
-
         {product.name}
-
       </h1>
-
-
 
       {/* Price */}
 
@@ -82,62 +71,40 @@ export default function ProductInfo({
           text-pink-500
         "
       >
-
-        ৳{product.price}
-
+        {formatCurrency(product.price)}
       </p>
-
-
 
       {/* Description */}
 
-      <p
-        className="
-          mt-6
-          text-gray-600
-          leading-7
-        "
-      >
-
-        {product.description}
-
-      </p>
-      <div
-        className="
-            mt-6
-            text-sm
-            text-gray-600
-        "
+      {product.description && (
+        <p
+          className="
+      mt-6
+      text-gray-600
+      leading-7
+    "
         >
-
-        <p className="font-medium text-gray-800">
-            Size:
+          {product.description}
         </p>
+      )}
+      {product.size_chart && (
+        <div
+          className="
+      mt-6
+      text-sm
+      text-gray-600
+    "
+        >
+          <p className="font-medium text-gray-800">Size guide:</p>
 
-        <p>
-            {product.size_chart}
-        </p>
-        <button
+          <p className="mt-1 whitespace-pre-line">{product.size_chart}</p>
+        </div>
+      )}
 
-  onClick={() =>
-
-    addItem({
-
-      id: Date.now(),
-
-      product_id: product.id,
-
-      name: product.name,
-
-      price: product.price,
-
-      image: product.thumbnail_url,
-
-    })
-
-  }
-
-  className="
+      <button
+        type="button"
+        onClick={handleWishlist}
+        className="
     mt-8
     flex
     items-center
@@ -145,31 +112,12 @@ export default function ProductInfo({
     text-sm
     text-rose-500
   "
+        aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
 
->
-
-  <Heart
-    size={20}
-    fill={
-      isSaved
-        ? "currentColor"
-        : "none"
-    }
-  />
-
-  {
-    isSaved
-      ? "Saved"
-      : "Add to Wishlist"
-  }
-
-</button>
-      </div>
-
-
-
+        {isSaved ? "Remove from Wishlist" : "Add to Wishlist"}
+      </button>
     </div>
-
   );
-
 }

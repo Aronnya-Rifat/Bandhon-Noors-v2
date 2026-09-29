@@ -23,6 +23,8 @@ export interface CartVariant {
   size: string | null;
 
   stock_quantity: number;
+  
+  additional_price: number;
 }
 
 

@@ -100,10 +100,11 @@ def change_status(
             db=db,
             order_id=order_id,
             status=new_status,
+            admin=admin,
         )
 
     except ValueError as error:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),
         )

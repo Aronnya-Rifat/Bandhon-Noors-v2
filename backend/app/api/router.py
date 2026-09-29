@@ -23,7 +23,11 @@ from app.routes.dashboard import router as dashboard_router
 from app.routes.upload import router as upload_router
 from app.routes.homepage import router as homepage_router
 from app.routes.admin_homepage import router as admin_homepage_router
-from app.routes.homepage_upload import router as homepage_upload_router
+from app.routes.admin_customers import (
+    router as admin_customers_router,
+)
+
+
 
 
 api_router = APIRouter()
@@ -113,6 +117,7 @@ api_router.include_router(
     admin_homepage_router,
 )
 
+
 api_router.include_router(
-    homepage_upload_router,
+    admin_customers_router,
 )

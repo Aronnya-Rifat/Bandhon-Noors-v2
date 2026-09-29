@@ -50,3 +50,25 @@ class InventoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        
+        
+class InventoryVariantResponse(BaseModel):
+    """
+    Variant information for inventory administration.
+    """
+
+    variant_id: int
+
+    product_id: int
+
+    product_name: str
+
+    variant_code: str
+
+    color_theme: str | None
+
+    size: str | None
+
+    stock_quantity: int
+
+    low_stock_threshold: int

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-
-from app.models.cart import CartItem
+from decimal import Decimal
+from app.models.cart import Cart, CartItem
 from app.models.order import (
     Order,
     OrderItem,
@@ -28,25 +28,17 @@ def create_order(
     """
 
 
-    cart_items = (
+    customer_cart_items = (
         db.query(CartItem)
+        .join(
+            Cart,
+            CartItem.cart_id == Cart.id,
+        )
         .filter(
-            CartItem.cart_id.in_(
-                db.query(CartItem.cart_id)
-                .filter(
-                    CartItem.cart_id.isnot(None)
-                )
-            )
+            Cart.customer_id == customer.id
         )
         .all()
     )
-
-
-    customer_cart_items = [
-        item
-        for item in cart_items
-        if item.cart.customer_id == customer.id
-    ]
 
 
     if not customer_cart_items:
@@ -55,7 +47,13 @@ def create_order(
         )
 
 
-    total_amount = 0
+    subtotal = Decimal("0.00")
+
+    delivery_charge = (
+        Decimal("80.00")
+        if data.delivery_area.value == "DHAKA"
+        else Decimal("150.00")
+    )
 
     address = (
         db.query(CustomerAddress)
@@ -84,6 +82,9 @@ def create_order(
     order = Order(
         customer_id=customer.id,
         status=OrderStatus.PENDING,
+        subtotal=0,
+        delivery_area=data.delivery_area.value,
+        delivery_charge=delivery_charge,
         total_amount=0,
         shipping_address=shipping_snapshot,
     )
@@ -129,7 +130,7 @@ def create_order(
         )
 
 
-        total_amount += (
+        subtotal += (
             price * item.quantity
         )
 
@@ -139,8 +140,15 @@ def create_order(
             variant_id=variant.id,
             product_name=variant.product.name,
             variant_info=(
-                f"{variant.color_theme} / "
-                f"{variant.size}"
+                " / ".join(
+                    value
+                    for value in (
+                        variant.color_theme,
+                        variant.size,
+                    )
+                    if value
+                )
+                or "Standard option"
             ),
             quantity=item.quantity,
             unit_price=price,
@@ -172,7 +180,12 @@ def create_order(
         db.delete(item)
 
 
-    order.total_amount = total_amount
+    order.subtotal = subtotal
+
+    order.total_amount = (
+        subtotal +
+        delivery_charge
+    )
 
 
     db.commit()

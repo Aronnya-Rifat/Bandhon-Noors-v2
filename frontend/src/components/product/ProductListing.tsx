@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductCard from "@/components/product/ProductCard";
 import ProductToolbar from "@/components/product/ProductToolbar";
@@ -33,8 +33,16 @@ interface ProductListingProps {
   }[];
 
   selectedCategory: string;
-
+    
   selectedSubcategory: string;
+
+  initialSearch?: string;
+
+  selectedSort?: string;
+
+  selectedSize?: string;
+
+  selectedColor?: string;
 
   layout?: "collection" | "catalogue";
 }
@@ -47,48 +55,110 @@ export default function ProductListing({
 
   selectedSubcategory,
 
+  initialSearch = "",
+
+  selectedSort = "",
+
+  selectedSize = "",
+
+  selectedColor = "",
+
   layout = "collection",
 }: ProductListingProps) {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
 
-  const [sortType, setSortType] = useState("");
-
-  const [selectedSize, setSelectedSize] = useState("");
-
-  const [selectedColor, setSelectedColor] = useState("");
-
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
+ 
   const router = useRouter();
+
+  function navigateToProducts(
+    overrides: {
+      category?: string;
+      subcategory?: string;
+      query?: string;
+      sort?: string;
+      size?: string;
+      color?: string;
+    } = {},
+  ) {
+    const category = overrides.category ?? selectedCategory;
+    const subcategory = overrides.subcategory ?? selectedSubcategory;
+    const query = overrides.query ?? initialSearch;
+    const sort = overrides.sort ?? selectedSort;
+    const size = overrides.size ?? selectedSize;
+    const color = overrides.color ?? selectedColor;
+
+    const searchParams = new URLSearchParams();
+
+    if (category) {
+      searchParams.set("category", category);
+    }
+
+    if (subcategory) {
+      searchParams.set("subcategory", subcategory);
+    }
+
+    if (query.trim()) {
+      searchParams.set("query", query.trim());
+    }
+
+    if (sort) {
+      searchParams.set("sort", sort);
+    }
+
+    if (size) {
+      searchParams.set("size", size);
+    }
+
+    if (color) {
+      searchParams.set("color", color);
+    }
+
+    const queryString = searchParams.toString();
+
+    router.push(
+      queryString
+        ? `/products?${queryString}`
+        : "/products",
+    );
+  }
+
   function changeCategory(value: string) {
-    if (!value) {
-      router.push("/products");
-
-      return;
-    }
-
-    router.push(`/products?category=${value}`);
+    navigateToProducts({
+      category: value,
+      subcategory: "",
+    });
+  }
+  function changeSize(value: string) {
+    navigateToProducts({
+      size: value,
+    });
   }
 
+  function changeColor(value: string) {
+    navigateToProducts({
+      color: value,
+    });
+  }
   function changeSubcategory(value: string) {
-    router.push(`/products?category=${selectedCategory}&subcategory=${value}`);
+    navigateToProducts({
+      subcategory: value,
+    });
   }
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
 
-    return matchesSearch;
-  });
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortType === "price-low") {
-      return a.price - b.price;
-    }
+  function submitSearch() {
+    navigateToProducts({
+      query: search,
+    });
+  }
 
-    if (sortType === "price-high") {
-      return b.price - a.price;
-    }
-
-    return 0;
-  });
+  function changeSort(value: string) {
+    navigateToProducts({
+      sort: value,
+    });
+  }
   const [showFilters, setShowFilters] = useState(false);
   return (
     <div
@@ -114,8 +184,8 @@ export default function ProductListing({
           onSubcategoryChange={changeSubcategory}
           selectedSize={selectedSize}
           selectedColor={selectedColor}
-          onSizeChange={setSelectedSize}
-          onColorChange={setSelectedColor}
+          onSizeChange={changeSize}
+          onColorChange={changeColor}
         />
       </div>
 
@@ -124,14 +194,16 @@ export default function ProductListing({
           lg:col-span-3
         "
       >
-        <ProductToolbar
+         <ProductToolbar
           search={search}
+          sort={selectedSort}
           onSearchChange={setSearch}
-          onSortChange={setSortType}
+          onSearchSubmit={submitSearch}
+          onSortChange={changeSort}
           onFilterClick={() => setShowFilters(true)}
         />
 
-        {sortedProducts.length === 0 ? (
+          {products.length === 0 ? (
           <p
             className="
                 text-gray-500
@@ -159,7 +231,7 @@ export default function ProductListing({
                 `
             }
           >
-            {sortedProducts.map((product) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -223,8 +295,8 @@ export default function ProductListing({
               onSubcategoryChange={changeSubcategory}
               selectedSize={selectedSize}
               selectedColor={selectedColor}
-              onSizeChange={setSelectedSize}
-              onColorChange={setSelectedColor}
+              onSizeChange={changeSize}
+              onColorChange={changeColor}
             />
           </div>
         </div>

@@ -38,11 +38,29 @@ export default function ProductPurchase({
 
 
   const [selectedVariant, setSelectedVariant] =
-    useState<ProductVariant>(
-      variants[0]
+    useState<ProductVariant | null>(
+      () =>
+        variants.find(
+          (variant) => variant.stock_quantity > 0,
+        ) ?? null,
     );
-
-
+  if (selectedVariant === null) {
+    return (
+      <div
+        className="
+          mt-8
+          rounded-xl
+          bg-gray-50
+          px-5
+          py-4
+          text-sm
+          text-gray-600
+        "
+      >
+        This product is currently unavailable.
+      </div>
+    );
+  }
   return (
 
     <>

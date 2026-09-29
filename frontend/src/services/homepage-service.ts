@@ -5,34 +5,14 @@
  */
 
 
-import { apiRequest } from "@/lib/api";
+import {
+  apiRequest,
+  getApiAssetUrl,
+} from "@/lib/api";
+import type {
+  HomepageContent,
+} from "@/types/homepage";
 
-
-export interface HomepageContent {
-
-  id: number;
-
-  section_name: string;
-
-  title: string | null;
-
-  description: string | null;
-
-  image_url: string | null;
-
-  button_text: string | null;
-
-  button_link: string | null;
-
-  display_order: number;
-
-  is_active: boolean;
-
-  created_at: string;
-
-  updated_at: string;
-
-}
 
 
 
@@ -45,20 +25,17 @@ export async function getHeroImages(): Promise<string[]> {
     );
 
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://127.0.0.1:8000";
-
-
 
   return content
     .filter(
       (item) => item.image_url
     )
     .map(
-      (item) =>
-        `${API_URL}${item.image_url}`
-    );
+  (item) =>
+    getApiAssetUrl(
+      item.image_url!,
+    ),
+);
 
 }
 export async function getHomepageContent(): Promise<HomepageContent[]> {
@@ -87,4 +64,90 @@ export async function getHomepageSection(
     ?? null
   );
 
+}
+
+export function getAdminHomepageContent(
+  token: string,
+): Promise<HomepageContent[]> {
+  return apiRequest<HomepageContent[]>(
+    "/admin/homepage",
+    {
+      token,
+    },
+  );
+}
+
+export function uploadAdminHeroImage(
+  token: string,
+  file: File,
+): Promise<HomepageContent> {
+  const formData =
+    new FormData();
+
+  formData.append(
+    "file",
+    file,
+  );
+
+  return apiRequest<HomepageContent>(
+    "/admin/homepage",
+    {
+      method: "POST",
+      token,
+      body: formData,
+    },
+  );
+}
+
+export function updateAdminHomepageContent(
+  token: string,
+  contentId: number,
+  update: {
+    title?: string;
+    description?: string;
+    button_text?: string;
+    button_link?: string;
+    display_order?: number;
+    is_active?: boolean;
+  },
+): Promise<HomepageContent> {
+  return apiRequest<HomepageContent>(
+    `/admin/homepage/${contentId}`,
+    {
+      method: "PUT",
+      token,
+      body: update,
+    },
+  );
+}
+
+export function deleteAdminHomepageContent(
+  token: string,
+  contentId: number,
+): Promise<{
+  message: string;
+}> {
+  return apiRequest<{
+    message: string;
+  }>(
+    `/admin/homepage/${contentId}`,
+    {
+      method: "DELETE",
+      token,
+    },
+  );
+}
+
+export function reorderAdminHomepageContent(
+  token: string,
+  ids: number[],
+): Promise<HomepageContent[]> {
+  return apiRequest<HomepageContent[]>(
+    "/admin/homepage/reorder",
+    {
+      method: "PUT",
+      token,
+      body: ids,
+    },
+  );
 }

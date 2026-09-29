@@ -22,7 +22,14 @@ class OrderStatus(str, Enum):
 
     CANCELLED = "CANCELLED"
 
+class DeliveryArea(str, Enum):
+    """
+    Supported delivery areas.
+    """
 
+    DHAKA = "DHAKA"
+
+    OUTSIDE = "OUTSIDE"
 
 class OrderCreate(BaseModel):
     """
@@ -30,6 +37,8 @@ class OrderCreate(BaseModel):
     """
 
     address_id: int
+    
+    delivery_area: DeliveryArea
 
 
 
@@ -66,12 +75,17 @@ class OrderResponse(BaseModel):
     customer_id: int
 
     status: OrderStatus
+    subtotal: float
 
+    delivery_area: DeliveryArea
+
+    delivery_charge: float
+    
     total_amount: float
 
     shipping_address: str
 
-    items: list[OrderItemResponse] = []
+    items: list[OrderItemResponse]
 
 
     created_at: datetime

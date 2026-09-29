@@ -236,3 +236,110 @@ def remove_cart_item(
     db.commit()
 
     return item
+
+def build_cart_response(
+    cart: Cart,
+) -> dict:
+    """
+    Build the public cart API response.
+
+    Prices are calculated on the server so clients
+    cannot choose their own product prices.
+    """
+
+    response_items = []
+
+    subtotal = 0.0
+
+    total_items = 0
+
+    for item in cart.items:
+        variant = item.variant
+
+        product = variant.product
+
+        base_price = float(
+            product.price
+        )
+
+        additional_price = float(
+            variant.additional_price or 0
+        )
+
+        unit_price = (
+            base_price +
+            additional_price
+        )
+
+        subtotal += (
+            unit_price *
+            item.quantity
+        )
+
+        total_items += item.quantity
+
+        response_items.append(
+            {
+                "id": item.id,
+                "quantity": item.quantity,
+                "product": {
+                    "id": product.id,
+                    "product_code": (
+                        product.product_code
+                    ),
+                    "name": product.name,
+                    "price": unit_price,
+                },
+                "variant": {
+                    "id": variant.id,
+                    "variant_code": (
+                        variant.variant_code
+                    ),
+                    "color_theme": (
+                        variant.color_theme
+                    ),
+                    "size": variant.size,
+                    "stock_quantity": (
+                        variant.stock_quantity
+                    ),
+                    "additional_price": (
+                        additional_price
+                    ),
+                },
+            }
+        )
+
+    return {
+        "id": cart.id,
+        "items": response_items,
+        "total_items": total_items,
+        "subtotal": subtotal,
+    }
+    
+def clear_cart_items(
+    db: Session,
+    customer: User,
+) -> Cart:
+    """
+    Remove every item from the customer's cart.
+    """
+
+    cart = get_or_create_cart(
+        db=db,
+        customer=customer,
+    )
+
+    (
+        db.query(CartItem)
+        .filter(
+            CartItem.cart_id == cart.id
+        )
+        .delete(
+            synchronize_session=False
+        )
+    )
+
+    db.commit()
+    db.refresh(cart)
+
+    return cart

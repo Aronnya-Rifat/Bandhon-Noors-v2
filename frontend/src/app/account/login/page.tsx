@@ -1,104 +1,192 @@
-/**
- * Bandhon Noors Login Page
- *
- * Frontend only.
- *
- * Future:
- * POST /auth/login
- */
+"use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  SubmitEvent,
+  useEffect,
+  useState,
+} from "react";
+
+import { ApiError } from "@/lib/api";
+import {
+  getCurrentUser,
+  loginCustomer,
+} from "@/services/auth-service";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function LoginPage() {
+  const router = useRouter();
 
+  const setSession =
+    useAuthStore(
+      (state) => state.setSession,
+    );
+  const token =
+    useAuthStore(
+      (state) => state.token,
+    );
+
+  useEffect(() => {
+    if (token) {
+      const currentUser =
+        useAuthStore.getState().user;
+
+      router.replace(
+        currentUser &&
+          currentUser.role !== "CUSTOMER"
+          ? "/admin"
+          : "/account",
+      );
+    }
+  }, [token, router]);
+  const [login, setLogin] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  async function handleSubmit(
+    event: SubmitEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const tokenResponse =
+        await loginCustomer({
+          login: login.trim(),
+          password,
+        });
+
+      const authenticatedUser =
+        await getCurrentUser(
+          tokenResponse.access_token,
+        );
+
+      setSession(
+        tokenResponse.access_token,
+        authenticatedUser,
+      );
+
+      router.push(
+        authenticatedUser.role === "CUSTOMER"
+          ? "/account"
+          : "/admin",
+      );
+    } catch (requestError) {
+      setError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : "Unable to log in. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-
-    <main
-      className="
-        container
-        py-20
-      "
-    >
-
-      <div
-        className="
-          max-w-md
-          mx-auto
-        "
-      >
-
-        <h1
-          className="
-            text-3xl
-            font-semibold
-            text-[#3F312B]
-          "
-        >
-
+    <main className="container py-20">
+      <div className="mx-auto max-w-md">
+        <h1 className="text-3xl font-semibold text-[#3F312B]">
           Login
-
         </h1>
 
-
-
         <form
-          className="
-            mt-8
-            space-y-5
-          "
+          onSubmit={handleSubmit}
+          className="mt-8 space-y-5"
         >
+          <div>
+            <label
+              htmlFor="login"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Email or phone number
+            </label>
 
-          <input
-            type="email"
-            placeholder="Email"
-            className="
-              w-full
-              border
-              rounded-lg
-              px-4
-              py-3
-            "
-          />
+            <input
+              id="login"
+              value={login}
+              onChange={(event) =>
+                setLogin(event.target.value)
+              }
+              autoComplete="username"
+              required
+              placeholder="Email or phone number"
+              className="w-full rounded-lg border px-4 py-3"
+            />
+          </div>
 
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="
-              w-full
-              border
-              rounded-lg
-              px-4
-              py-3
-            "
-          />
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
+              autoComplete="current-password"
+              minLength={8}
+              required
+              className="w-full rounded-lg border px-4 py-3"
+            />
+          </div>
 
+          {error && (
+            <p
+              role="alert"
+              className="text-sm text-red-600"
+            >
+              {error}
+            </p>
+          )}
 
           <button
+            type="submit"
+            disabled={isSubmitting}
             className="
               w-full
-              bg-[#D88C9A]
-              hover:bg-[#C97B89]
-              text-white
-              py-3
               rounded-full
+              bg-[#D88C9A]
+              py-3
+              text-white
               transition
+              hover:bg-[#C97B89]
+              disabled:cursor-not-allowed
+              disabled:opacity-60
             "
           >
-
-            Login
-
+            {isSubmitting
+              ? "Logging in..."
+              : "Login"}
           </button>
-
-
         </form>
 
-
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/account/register"
+            className="text-pink-500 hover:underline"
+          >
+            Create one
+          </Link>
+        </p>
       </div>
-
-
     </main>
-
   );
-
 }

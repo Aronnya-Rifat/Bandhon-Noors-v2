@@ -10,8 +10,7 @@
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface Category {
   id: number;
@@ -62,8 +61,18 @@ export default function ProductFilters({
 
   onColorChange,
 }: ProductFiltersProps) {
-  const router = useRouter();
   const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
+
+  useEffect(() => {
+    const activeMainCategory = categories.find(
+      (category) =>
+        category.parent_id === null &&
+        category.slug === selectedCategory,
+    );
+
+    setExpandedCategory(activeMainCategory?.id ?? null);
+  }, [categories, selectedCategory]);
+
   const mainCategories = categories
 
     .filter((category) => category.parent_id === null)
@@ -80,14 +89,10 @@ export default function ProductFilters({
 
   function handleMainCategory(slug: string) {
     onCategoryChange(slug);
-
-    router.push(`/products?category=${slug}`);
   }
 
-  function handleSubCategory(parentSlug: string, subSlug: string) {
+  function handleSubCategory(subSlug: string) {
     onSubcategoryChange(subSlug);
-
-    router.push(`/products?category=${parentSlug}&subcategory=${subSlug}`);
   }
 
   const sizes = ["S", "M", "L", "XL"];
@@ -123,7 +128,7 @@ export default function ProductFilters({
           "
         >
           <button
-            onClick={() => router.push("/products")}
+            onClick={() => onCategoryChange("")}
             className="
               text-left
               text-gray-600
@@ -180,7 +185,7 @@ export default function ProductFilters({
                     {subCategories.map((sub) => (
                       <button
                         key={sub.id}
-                        onClick={() => handleSubCategory(main.slug, sub.slug)}
+                        onClick={() => handleSubCategory(sub.slug)}
                         className={`
                           block
                           text-sm
@@ -222,6 +227,21 @@ export default function ProductFilters({
             space-y-3
           "
         >
+          {" "}
+          <label
+            className="
+              flex
+              gap-3
+              text-gray-600
+            "
+          >
+            <input
+              type="radio"
+              checked={selectedSize === ""}
+              onChange={() => onSizeChange("")}
+            />
+            All sizes
+          </label>
           {sizes.map((size) => (
             <label
               key={size}
@@ -261,6 +281,21 @@ export default function ProductFilters({
             space-y-3
           "
         >
+          {" "}
+          <label
+            className="
+              flex
+              gap-3
+              text-gray-600
+            "
+          >
+            <input
+              type="radio"
+              checked={selectedColor === ""}
+              onChange={() => onColorChange("")}
+            />
+            All colors
+          </label>
           {colors.map((color) => (
             <label
               key={color}

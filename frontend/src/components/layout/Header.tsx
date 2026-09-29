@@ -27,7 +27,7 @@ import MobileMenu from "@/components/layout/MobileMenu";
 import { siteConfig } from "@/config/site";
 import Image from "next/image";
 import { useCartStore } from "@/store/cart-store";
-
+import { useAuthStore } from "@/store/auth-store";
 
 export default function Header() {
 
@@ -39,10 +39,19 @@ export default function Header() {
     const [searchOpen, setSearchOpen] =
     useState(false);
     const items =
-    useCartStore(
-      (state) => state.items
+      useCartStore(
+        (state) => state.items
+      );
+      const user =
+    useAuthStore(
+      (state) => state.user,
     );
 
+  const accountHref =
+    user?.role === "ADMIN" ||
+    user?.role === "SUPER_ADMIN"
+      ? "/admin"
+    : "/account";
   return (
     <>
     <header
@@ -197,7 +206,7 @@ export default function Header() {
           {/* Account */}
 
           <Link
-            href="/account"
+            href={accountHref}
             className="
                 flex
                 items-center
@@ -218,7 +227,10 @@ export default function Header() {
                 md:inline
                 "
             >
-                Account
+                {user?.role === "ADMIN" ||
+                  user?.role === "SUPER_ADMIN"
+                    ? "Admin"
+                    : "Account"}
             </span>
 
             </Link>

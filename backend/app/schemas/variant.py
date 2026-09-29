@@ -23,9 +23,15 @@ class VariantCreate(BaseModel):
         max_length=50,
     )
 
-    stock_quantity: int = 0
+    stock_quantity: int = Field(
+        default=0,
+        ge=0,
+    )
 
-    low_stock_threshold: int = 5
+    low_stock_threshold: int = Field(
+        default=5,
+        ge=0,
+    )
 
     additional_price: float | None = None
 
@@ -40,9 +46,15 @@ class VariantUpdate(BaseModel):
 
     size: str | None = None
 
-    stock_quantity: int | None = None
+    stock_quantity: int | None = Field(
+        default=None,
+        ge=0,
+    )
 
-    low_stock_threshold: int | None = None
+    low_stock_threshold: int | None = Field(
+        default=None,
+        ge=0,
+    )
 
     additional_price: float | None = None
 

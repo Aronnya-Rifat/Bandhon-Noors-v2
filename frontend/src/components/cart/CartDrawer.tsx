@@ -13,7 +13,8 @@
 "use client";
 import { useCartStore } from "@/store/cart-store";
 import { useRouter } from "next/navigation";
-
+import { useCartActions } from "@/hooks/use-cart-actions";
+import { formatCurrency } from "@/lib/utils";
 interface CartDrawerProps {
   open: boolean;
 
@@ -23,12 +24,13 @@ interface CartDrawerProps {
 export default function CartDrawer({ open, onClose }: CartDrawerProps) {
   const items = useCartStore((state) => state.items);
   const router = useRouter();
-
-  const removeItem = useCartStore((state) => state.removeItem);
-
-  const updateQuantity = useCartStore((state) => state.updateQuantity);
-
-  const clearCart = useCartStore((state) => state.clearCart);
+  const {
+    removeItem,
+    updateQuantity,
+    clearCart,
+    error,
+    isWorking,
+  } = useCartActions();
   return (
     <>
       {/* Overlay */}
@@ -84,6 +86,8 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
           </h2>
 
           <button
+            type="button"
+            aria-label="Close cart"
             onClick={onClose}
             className="
               text-gray-500
@@ -151,10 +155,12 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                             mt-1
                         "
                     >
-                      {item.variant.color_theme}
-                      {" / "}
-                      {item.variant.size}
-                    </p>
+                      {[
+                        item.variant.color_theme,
+                        item.variant.size,
+                      ]
+                        .filter(Boolean)
+                        .join(" / ") || "Standard option"}                    </p>
 
                     <p
                       className="
@@ -162,7 +168,9 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                             text-pink-500
                         "
                     >
-                      ৳{item.product.price}
+                      {formatCurrency(
+                                item.product.price * item.quantity,
+                              )}
                     </p>
 
                     {/* Quantity */}
@@ -176,8 +184,14 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                         "
                     >
                       <button
+                      type="button"
+                      disabled={
+                        isWorking ||
+                        item.quantity <= 1
+                      }
+                      aria-label="Decrease quantity"
                         onClick={() =>
-                          updateQuantity(
+                          void updateQuantity(
                             item.id,
                             Math.max(1, item.quantity - 1),
                           )
@@ -195,22 +209,38 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <span>{item.quantity}</span>
 
                       <button
+                        type="button"
+                        disabled={
+                        isWorking ||
+                        item.quantity >=
+                          item.variant.stock_quantity
+                      }
                         onClick={() =>
-                          updateQuantity(item.id, item.quantity + 1)
+                          void updateQuantity(
+                            item.id,
+                            item.quantity + 1,
+                          )
                         }
                         className="
-                            w-8
-                            h-8
-                            border
-                            rounded-full
-                            "
+                          w-8
+                          h-8
+                          rounded-full
+                          border
+                          disabled:cursor-not-allowed
+                          disabled:opacity-40
+                        "
+                        aria-label="Increase quantity"
                       >
                         +
                       </button>
                     </div>
 
                     <button
-                      onClick={() => removeItem(item.id)}
+                      type="button"
+                      disabled={isWorking}
+                      onClick={() =>
+                        void removeItem(item.id)
+                      }
                       className="
                             mt-3
                             text-sm
@@ -239,22 +269,35 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
       font-semibold
       text-gray-800
     "
-                >
+                > 
                   <span>Subtotal</span>
 
                   <span>
-                    ৳
-                    {items.reduce(
-                      (total, item) =>
-                        total + item.product.price * item.quantity,
-
-                      0,
+                    {formatCurrency(
+                      items.reduce(
+                        (total, item) =>
+                          total +
+                          item.product.price *
+                            item.quantity,
+                        0,
+                      ),
                     )}
                   </span>
                 </div>
+                {error && (
+                  <p
+                    role="alert"
+                    className="mb-4 text-sm text-red-600"
+                  >
+                    {error}
+                  </p>
+                )}
+
 
                 <button
-                  onClick={() => clearCart()}
+                  type="button"
+                  disabled={isWorking}
+                  onClick={() => void clearCart()}
                   className="
       mt-3
       text-sm
@@ -265,6 +308,8 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                 </button>
 
                 <button
+                  type="button"
+                  disabled={isWorking}
                   onClick={() => {
                     onClose();
 

@@ -16,23 +16,21 @@
 
 interface ProductToolbarProps {
   search: string;
-
+  sort?: string;
   onSearchChange: (value: string) => void;
-
+  onSearchSubmit?: () => void;
   onSortChange?: (value: string) => void;
-
   onFilterClick?: () => void;
 }
 
 export default function ProductToolbar({
   search,
-
+  sort,
   onSearchChange,
-
+  onSearchSubmit,
   onSortChange,
-
   onFilterClick,
-}: ProductToolbarProps) {
+}: ProductToolbarProps) { 
   return (
     <div
       className="
@@ -52,24 +50,48 @@ export default function ProductToolbar({
           gap-4
         "
       >
-        <input
-          type="text"
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search products..."
-          className="
-            border
-            border-pink-200
-            rounded-full
-            px-5
-            py-2
-            w-full
-            md:w-80
-            outline-none
-            text-gray-700
-          "
-        />
+        <form
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSearchSubmit?.();
+          }}
+          className="flex w-full gap-2 md:w-auto"
+        >
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search products..."
+            aria-label="Search products"
+            className="
+              min-w-0
+              flex-1
+              border
+              border-pink-200
+              rounded-full
+              px-5
+              py-2
+              md:w-80
+              outline-none
+              text-gray-700
+            "
+          />
 
+          <button
+            type="submit"
+            className="
+              rounded-full
+              bg-[#D88C9A]
+              px-5
+              py-2
+              text-white
+              hover:bg-[#C97B89]
+            "
+          >
+            Search
+          </button>
+        </form>
         <div
           className="
             flex
@@ -94,6 +116,8 @@ export default function ProductToolbar({
           </button>
 
           <select
+            value={sort}
+            aria-label="Sort products"
             onChange={(event) => onSortChange?.(event.target.value)}
             className="
         border

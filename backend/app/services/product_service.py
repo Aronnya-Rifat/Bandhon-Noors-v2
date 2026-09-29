@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session, selectinload
-
 from app.models.product import Product
+from app.models.product_variant import ProductVariant
 from app.models.category import Category
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
@@ -10,7 +10,40 @@ from app.schemas.product import (
 from app.services.category_service import (
     get_category_with_children,
 )
+def _product_card_data(product: Product) -> dict:
+    """Build the shared storefront product card fields."""
+    category = product.category
+    parent = category.parent
 
+    media_items = sorted(
+        product.media,
+        key=lambda item: (item.display_order, item.id),
+    )
+
+    primary_media = next(
+        (item for item in media_items if item.is_primary),
+        media_items[0] if media_items else None,
+    )
+
+    thumbnail_url = (
+        primary_media.thumbnail_url or primary_media.file_url
+        if primary_media is not None
+        else None
+    )
+
+    return {
+        "id": product.id,
+        "product_code": product.product_code,
+        "name": product.name,
+        "price": product.price,
+        "category_id": parent.id if parent else category.id,
+        "category_name": parent.name if parent else category.name,
+        "subcategory_id": category.id if parent else None,
+        "subcategory_name": category.name if parent else None,
+        "thumbnail_url": thumbnail_url,
+        "is_active": product.is_active,
+        "is_featured": product.is_featured,
+    }
 def create_product(
     db: Session,
     data: ProductCreate,
@@ -57,6 +90,7 @@ def create_product(
         weight=data.weight,
         size_chart=data.size_chart,
         is_active=True,
+        is_featured=data.is_featured,
     )
 
 
@@ -93,7 +127,96 @@ def get_products(
         )
         .all()
     )
+    
+def get_admin_products(
+    db: Session,
+    page: int = 1,
+    page_size: int = 50,
+    query: str | None = None,
+    category_id: int | None = None,
+) -> dict:
+    """
+    Return a paginated admin product list.
 
+    Includes active and inactive products.
+    """
+
+    products_query = db.query(Product)
+
+    if query:
+        search_text = (
+            f"%{query.strip()}%"
+        )
+
+        products_query = (
+            products_query.filter(
+                or_(
+                    Product.name.ilike(
+                        search_text
+                    ),
+                    Product.product_code.ilike(
+                        search_text
+                    ),
+                )
+            )
+        )
+
+    if category_id is not None:
+        category_ids = (
+            get_category_with_children(
+                db,
+                category_id,
+            )
+        )
+
+        products_query = (
+            products_query.filter(
+                Product.category_id.in_(
+                    category_ids
+                )
+            )
+        )
+
+    total = products_query.count()
+
+    total_pages = max(
+        1,
+        (
+            total
+            + page_size
+            - 1
+        )
+        // page_size,
+    )
+
+    safe_page = min(
+        page,
+        total_pages,
+    )
+
+    products = (
+        products_query
+        .order_by(
+            Product.created_at.desc(),
+            Product.id.desc(),
+        )
+        .offset(
+            (
+                safe_page - 1
+            )
+            * page_size
+        )
+        .limit(page_size)
+        .all()
+    )
+
+    return {
+        "items": products,
+        "total": total,
+        "page": safe_page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 def get_new_arrivals(
     db: Session,
 ):
@@ -121,81 +244,9 @@ def get_new_arrivals(
     )
 
 
-    result = []
-
-
-    for product in products:
-
-        thumbnail = None
-
-
-        for media in product.media:
-
-            if media.is_primary:
-
-                thumbnail = (
-                    media.thumbnail_url
-                    or media.file_url
-                )
-
-                break
-
-
-        if thumbnail is None and product.media:
-
-            thumbnail = (
-                product.media[0]
-                .thumbnail_url
-                or product.media[0]
-                .file_url
-            )
-
-
-        result.append(
-            {
-                "id": product.id,
-
-                "product_code": product.product_code,
-
-                "name": product.name,
-
-
-                "category_id":
-                    product.category.parent_id
-                    if product.category.parent_id
-                    else product.category.id,
-
-
-                "category_name":
-                    product.category.parent.name
-                    if product.category.parent
-                    else product.category.name,
-
-
-                "subcategory_id":
-                    product.category.id
-                    if product.category.parent
-                    else None,
-
-
-                "subcategory_name":
-                    product.category.name
-                    if product.category.parent
-                    else None,
-
-
-                "price": product.price,
-
-                "thumbnail_url": thumbnail,
-
-                "is_active": product.is_active,
-
-                "is_featured": product.is_featured,
-            }
-        )
-
-
-    return result
+    
+    return [_product_card_data(product) for product in products]
+    
 
 def get_product_cards(
     db: Session,
@@ -203,6 +254,8 @@ def get_product_cards(
     subcategory: str | None = None,
     query: str | None = None,
     sort: str | None = None,
+    size: str | None = None,
+    color: str | None = None,
 ):
     """
     Return lightweight product data
@@ -226,49 +279,54 @@ def get_product_cards(
             Product.is_active == True
         )
     )
-    if category:
+    main_category = None
 
+    if category:
         main_category = (
             db.query(Category)
             .filter(
-                Category.slug == category
+                Category.slug == category,
+                Category.parent_id.is_(None),
+                Category.is_active.is_(True),
             )
             .first()
         )
 
-        if main_category:
+        if main_category is None:
+            return []
 
-            child_categories = (
-                db.query(Category.id)
-                .filter(
-                    Category.parent_id == main_category.id
-                )
-                .all()
-            )
+        category_ids = get_category_with_children(
+            db,
+            main_category.id,
+        )
 
-            child_ids = [
-                item[0]
-                for item in child_categories
-            ]
-
-            products_query = (
-                products_query
-                .filter(
-                    Product.category_id.in_(child_ids)
-                )
-            )
-
+        products_query = products_query.filter(
+            Product.category_id.in_(category_ids)
+        )
 
     if subcategory:
-
-        products_query = (
-            products_query
+        subcategory_query = (
+            db.query(Category)
             .filter(
-                Category.slug == subcategory
+                Category.slug == subcategory,
+                Category.parent_id.is_not(None),
+                Category.is_active.is_(True),
             )
         )
 
+        if main_category is not None:
+            subcategory_query = subcategory_query.filter(
+                Category.parent_id == main_category.id
+            )
 
+        selected_subcategory = subcategory_query.first()
+
+        if selected_subcategory is None:
+            return []
+
+        products_query = products_query.filter(
+            Product.category_id == selected_subcategory.id
+        )  
     if query:
 
         search_text = f"%{query}%"
@@ -282,7 +340,24 @@ def get_product_cards(
                 )
             )
         )
+    variant_filters = []
 
+    if size:
+        variant_filters.append(
+            ProductVariant.size.ilike(size)
+        )
+
+    if color:
+        variant_filters.append(
+            ProductVariant.color_theme.ilike(color)
+        )
+
+    if variant_filters:
+        products_query = products_query.filter(
+            Product.variants.any(
+                and_(*variant_filters)
+            )
+        )
 
     if sort == "newest":
 
@@ -324,73 +399,7 @@ def get_product_cards(
         )
 
     products = products_query.all()
-    result = []
-
-
-    for product in products:
-
-        thumbnail = None
-
-
-        for media in product.media:
-
-            if media.is_primary:
-                thumbnail = media.thumbnail_url
-                break
-
-
-        if thumbnail is None and product.media:
-            thumbnail = (
-                product.media[0]
-                .thumbnail_url
-            )
-
-
-        result.append(
-            {
-                "id": product.id,
-
-                "product_code": product.product_code,
-
-                "name": product.name,
-
-
-                "category_id":
-                    product.category.parent_id
-                    if product.category.parent_id
-                    else product.category.id,
-
-
-                "category_name":
-                    product.category.parent.name
-                    if product.category.parent
-                    else product.category.name,
-
-
-                "subcategory_id":
-                    product.category.id
-                    if product.category.parent
-                    else None,
-
-
-                "subcategory_name":
-                    product.category.name
-                    if product.category.parent
-                    else None,
-
-
-                "price": product.price,
-
-                "thumbnail_url": thumbnail,
-
-                "is_active": product.is_active,
-
-                "is_featured": product.is_featured,
-            }
-        )
-        
-
-    return result
+    return [_product_card_data(product) for product in products]
 
 
 def get_product(
@@ -497,10 +506,9 @@ def get_featured_products(
     """
 
     products = (
-        db.query(Product)
-        .options(
+        db.query(Product).options(
             selectinload(Product.media),
-            selectinload(Product.category),
+            selectinload(Product.category).selectinload(Category.parent),
         )
         .filter(
             Product.is_active == True,
@@ -512,59 +520,8 @@ def get_featured_products(
         .limit(8)
         .all()
     )
-
-
-    result = []
-
-    for product in products:
-
-        thumbnail = None
-
-        for media in product.media:
-
-            if media.is_primary:
-                thumbnail = (
-                    media.thumbnail_url
-                    or media.file_url
-                )
-                break
-
-
-        if thumbnail is None and product.media:
-            thumbnail = (
-                product.media[0].thumbnail_url
-                or product.media[0].file_url
-            )
-
-
-        result.append(
-            {
-                "id": product.id,
-                "product_code": product.product_code,
-                "name": product.name,
-                "category_name": product.category.name,
-                "price": product.price,
-                "thumbnail_url": thumbnail,
-                "is_active": product.is_active,
-                "is_featured": product.is_featured,
-                "category_id": product.category.parent_id or product.category.id,
-
-                "subcategory_id": (
-                    product.category.id
-                    if product.category.parent_id
-                    else None
-                ),
-
-                "subcategory_name": (
-                    product.category.name
-                    if product.category.parent_id
-                    else None
-                ),
-            }
-        )
-
-
-    return result
+    return [_product_card_data(product) for product in products]
+    
 
 def deactivate_product(
     db: Session,
@@ -598,14 +555,10 @@ def get_product_detail(
 
 
     product = (
-        db.query(Product)
-        .options(
-            selectinload(
-                Product.variants
-            ),
-            selectinload(
-                Product.media
-            ),
+        db.query(Product).options(
+            selectinload(Product.variants),
+            selectinload(Product.media),
+            selectinload(Product.category).selectinload(Category.parent),
         )
         .filter(
             Product.id == product_id,
@@ -619,9 +572,18 @@ def get_product_detail(
         raise ValueError(
             "Product not found"
         )
-
-
-    return product
+    return {
+        **_product_card_data(product),
+        "description": product.description,
+        "weight": product.weight,
+        "size_chart": product.size_chart,
+        "media": sorted(
+            product.media,
+            key=lambda item: (item.display_order, item.id),
+        ),
+        "variants": product.variants,
+    }
+    
 def get_products_by_category(
     db: Session,
     category_id: int,
@@ -640,14 +602,9 @@ def get_products_by_category(
 
 
     products = (
-        db.query(Product)
-        .options(
-            selectinload(
-                Product.media
-            ),
-            selectinload(
-                Product.category
-            ),
+        db.query(Product).options(
+            selectinload(Product.media),
+            selectinload(Product.category).selectinload(Category.parent),
         )
         .filter(
             Product.category_id.in_(
@@ -661,42 +618,5 @@ def get_products_by_category(
         .all()
     )
 
-
-    result = []
-
-
-    for product in products:
-
-        thumbnail = None
-
-
-        for media in product.media:
-
-            if media.is_primary:
-                thumbnail = media.thumbnail_url
-                break
-
-
-        if thumbnail is None and product.media:
-            thumbnail = (
-                product.media[0]
-                .thumbnail_url
-            )
-
-
-        result.append(
-            {
-                "id": product.id,
-                "product_code": product.product_code,
-                "name": product.name,
-                "category_id": product.category_id,
-                "category_name": product.category.name,
-                "price": product.price,
-                "thumbnail_url": thumbnail,
-                "is_active": product.is_active,
-                "is_featured": product.is_featured,
-            }
-        )
-
-
-    return result
+    return [_product_card_data(product) for product in products]
+   

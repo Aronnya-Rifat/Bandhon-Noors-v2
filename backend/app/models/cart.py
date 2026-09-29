@@ -82,7 +82,9 @@ class CartItem(Base):
         "Cart",
         back_populates="items",
     )
-
+    variant = relationship(
+        "ProductVariant",
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

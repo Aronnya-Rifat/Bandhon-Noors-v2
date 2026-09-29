@@ -44,7 +44,22 @@ router = APIRouter(
     tags=["Admin Homepage"],
 )
 
-
+@router.get(
+    "/admin/homepage",
+    response_model=list[HomepageContentResponse],
+)
+def get_admin_homepage_content(
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    return (
+        db.query(HomepageContent)
+        .order_by(
+            HomepageContent.display_order.asc(),
+            HomepageContent.id.asc(),
+        )
+        .all()
+    )
 
 @router.post(
     "/admin/homepage",
@@ -148,6 +163,11 @@ def delete_homepage_content(
         )
 
 
+    if content.image_url:
+        delete_file(
+            content.image_url
+        )
+
     db.delete(content)
 
     db.commit()
@@ -219,3 +239,49 @@ def update_homepage_content(
 
 
     return content
+
+@router.put(
+    "/admin/homepage/reorder",
+    response_model=list[HomepageContentResponse],
+)
+def reorder_homepage_content(
+    ids: list[int],
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    contents = (
+        db.query(HomepageContent)
+        .filter(
+            HomepageContent.id.in_(ids)
+        )
+        .all()
+    )
+
+    contents_by_id = {
+        content.id: content
+        for content in contents
+    }
+
+    for display_order, content_id in enumerate(
+        ids,
+        start=1,
+    ):
+        content = contents_by_id.get(
+            content_id
+        )
+
+        if content is not None:
+            content.display_order = (
+                display_order
+            )
+
+    db.commit()
+
+    return (
+        db.query(HomepageContent)
+        .order_by(
+            HomepageContent.display_order.asc(),
+            HomepageContent.id.asc(),
+        )
+        .all()
+    )

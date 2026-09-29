@@ -1,7 +1,7 @@
 from pathlib import Path
 import uuid
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 
@@ -14,7 +14,7 @@ STORE_WIDTH = 1200
 STORE_HEIGHT = 1500
 
 THUMB_WIDTH = 300
-THUMB_HEIGHT = 400
+THUMB_HEIGHT = 375
 
 def create_processed_image(
     source_path: str,
@@ -40,46 +40,16 @@ def create_processed_image(
         "RGB"
     )
 
-
-    image.thumbnail(
-        (
-            STORE_WIDTH,
-            STORE_HEIGHT,
-        )
-    )
-
-
-    canvas = Image.new(
-        "RGB",
-        (
-            STORE_WIDTH,
-            STORE_HEIGHT,
-        ),
-        "white",
-    )
-
-
-    x = (
-        STORE_WIDTH
-        -
-        image.width
-    ) // 2
-
-
-    y = (
-        STORE_HEIGHT
-        -
-        image.height
-    ) // 2
-
-
-    canvas.paste(
+    canvas = ImageOps.fit(
         image,
         (
-            x,
-            y,
+            STORE_WIDTH,
+            STORE_HEIGHT,
         ),
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.5),
     )
+   
 
 
     filename = (
@@ -133,46 +103,16 @@ def create_thumbnail(
         "RGB"
     )
 
-
-    image.thumbnail(
-        (
-            THUMB_WIDTH,
-            THUMB_HEIGHT,
-        )
-    )
-
-
-    canvas = Image.new(
-        "RGB",
-        (
-            THUMB_WIDTH,
-            THUMB_HEIGHT,
-        ),
-        "white",
-    )
-
-
-    x = (
-        THUMB_WIDTH
-        -
-        image.width
-    ) // 2
-
-
-    y = (
-        THUMB_HEIGHT
-        -
-        image.height
-    ) // 2
-
-
-    canvas.paste(
+    canvas = ImageOps.fit(
         image,
         (
-            x,
-            y,
+            THUMB_WIDTH,
+            THUMB_HEIGHT,
         ),
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.5),
     )
+        
 
 
     filename = (
@@ -228,11 +168,14 @@ def create_homepage_image(
     )
 
 
-    image.thumbnail(
+    image = ImageOps.fit(
+        image,
         (
             1600,
-            1200,
-        )
+            1000,
+        ),
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.5),
     )
 
 

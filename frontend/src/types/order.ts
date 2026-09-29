@@ -22,100 +22,34 @@ export type OrderStatus =
 /**
  * Payment status.
  */
-export type PaymentStatus =
-  | "PENDING"
-  | "SUCCESS"
-  | "FAILED"
-  | "REFUNDED";
+export type DeliveryArea =
+  | "DHAKA"
+  | "OUTSIDE";
 
+export interface OrderCreate {
+  address_id: number;
+  delivery_area: DeliveryArea;
+}
 
-/**
- * Payment method.
- */
-export type PaymentMethod =
-  | "COD"
-  | "ONLINE";
-
-
-/**
- * Product snapshot inside order.
- *
- * This represents what was purchased.
- */
 export interface OrderItem {
-
   id: number;
-
+  variant_id: number;
   product_name: string;
-
-  variant_name: string | null;
-
+  variant_info: string;
   quantity: number;
-
   unit_price: number;
-
-  total_price: number;
 }
 
-
-/**
- * Shipping address snapshot.
- *
- * Stored at order creation time.
- */
-export interface ShippingAddress {
-
-  full_name: string;
-
-  phone: string;
-
-  address_line: string;
-
-  city: string;
-
-  postal_code: string | null;
-}
-
-
-/**
- * Payment information.
- */
-export interface OrderPayment {
-
-  id: number;
-
-  payment_method: PaymentMethod;
-
-  payment_status: PaymentStatus;
-
-  amount: number;
-}
-
-
-/**
- * Main order response.
- */
 export interface Order {
-
   id: number;
-
-  order_number: string;
-
+  customer_id: number;
   status: OrderStatus;
-
   subtotal: number;
-
+  delivery_area: DeliveryArea;
   delivery_charge: number;
-
   total_amount: number;
-
+  shipping_address: string;
   items: OrderItem[];
-
-  shipping_address: ShippingAddress;
-
-  payment: OrderPayment | null;
-
   created_at: string;
-
   updated_at: string;
 }

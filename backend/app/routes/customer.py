@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends
 from app.core.dependencies import get_current_user
 
 from app.models.user import User, UserRole
-
-from app.schemas.customer import CustomerProfileResponse
+from fastapi import HTTPException, status
+from app.schemas.user import UserResponse
 
 
 router = APIRouter(
@@ -15,7 +15,7 @@ router = APIRouter(
 
 @router.get(
     "/me",
-    response_model=CustomerProfileResponse,
+    response_model=UserResponse,
 )
 def customer_profile(
     user: User = Depends(get_current_user),
@@ -25,7 +25,7 @@ def customer_profile(
     """
 
     if user.role != UserRole.CUSTOMER:
-        from fastapi import HTTPException, status
+        
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

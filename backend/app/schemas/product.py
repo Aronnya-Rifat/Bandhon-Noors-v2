@@ -22,11 +22,15 @@ class ProductCreate(BaseModel):
 
     description: str | None = None
 
-    price: float
+    price: float = Field(
+            gt=0,
+        )
 
     weight: float | None = None
 
     size_chart: str | None = None
+    
+    is_featured: bool = False
 
 
 class ProductUpdate(BaseModel):
@@ -51,6 +55,7 @@ class ProductUpdate(BaseModel):
 
     is_active: bool | None = None
 
+    is_featured: bool | None = None
 
 class ProductResponse(BaseModel):
     """
@@ -84,7 +89,20 @@ class ProductResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class AdminProductPage(BaseModel):
+    """
+    Paginated admin product response.
+    """
 
+    items: list[ProductResponse]
+
+    total: int
+
+    page: int
+
+    page_size: int
+
+    total_pages: int
 class ProductListResponse(BaseModel):
     """
     Lightweight product response
@@ -145,33 +163,26 @@ class ProductVariantPublic(BaseModel):
 
     id: int
 
+    variant_code: str
+
     color_theme: str | None
 
     size: str | None
 
     stock_quantity: int
 
-    additional_price: float
+    additional_price: float | None
 
     class Config:
         from_attributes = True
 
 
-
-class ProductDetailResponse(BaseModel):
+class ProductDetailResponse(ProductListResponse):
     """
     Customer product page response.
     """
 
-    id: int
-
-    product_code: str
-
-    name: str
-
     description: str | None
-
-    price: float
 
     weight: float | None
 

@@ -4,7 +4,8 @@ from app.api.router import api_router
 from app.core.config import settings
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(
     title=settings.app_name,

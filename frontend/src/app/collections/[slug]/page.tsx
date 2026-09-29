@@ -22,7 +22,7 @@ import ProductListing from "@/components/product/ProductListing";
 
 
 import {
-  getCategoryBySlug,
+  getCategories,
 } from "@/services/category-service";
 
 
@@ -53,10 +53,11 @@ export default async function CollectionPage({
 
 
 
-  const category =
-    await getCategoryBySlug(
-      slug
-    );
+  const categories = await getCategories();
+
+  const category = categories.find(
+    (item) => item.slug === slug,
+  );
 
 
   if (!category) {
@@ -72,7 +73,17 @@ export default async function CollectionPage({
       category.id
     );
 
+  const parentCategory = category.parent_id !== null
+    ? categories.find((item) => item.id === category.parent_id)
+    : undefined;
 
+  const selectedCategory = category.parent_id === null
+    ? category.slug
+    : parentCategory?.slug ?? "";
+
+  const selectedSubcategory = category.parent_id !== null
+    ? category.slug
+    : "";
 
   return (
 
@@ -138,8 +149,12 @@ export default async function CollectionPage({
 
 
 
-      <ProductListing
+        <ProductListing
         products={products}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        layout="collection"
       />
 
 

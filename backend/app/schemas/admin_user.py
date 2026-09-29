@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-
+from datetime import datetime
 
 class AdminCreateRequest(BaseModel):
     """
@@ -23,7 +23,8 @@ class AdminCreateRequest(BaseModel):
         max_length=72,
     )
 
-
+class AdminStatusUpdate(BaseModel):
+    is_active: bool
 class AdminResponse(BaseModel):
     """
     Admin user response.
@@ -35,6 +36,7 @@ class AdminResponse(BaseModel):
     phone: str | None
     role: str
     is_active: bool
-
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
