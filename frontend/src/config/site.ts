@@ -94,13 +94,13 @@ export const siteConfig = {
   },
 
   social: {
-    facebook: "",
-    instagram: "",
+    facebook: "https://www.facebook.com/bandhon.noors",
+    instagram: "https://www.instagram.com/bandhon.noors?utm_source=ig_web_button_share_sheet&stkn=ZDNlZDc0MzIxNw==",
     youtube: "",
   },
 
   contact: {
-    email: "",
-    phone: "",
+    email: "rumana@bandhonnoors.com",
+    phone: "+880 1712205588",
   },
 };

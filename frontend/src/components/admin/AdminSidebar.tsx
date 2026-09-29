@@ -12,6 +12,7 @@ import {
   PanelsTopLeft,
   Users,
   UserCog,
+  MessagesSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -33,6 +34,11 @@ const navigationItems = [
     label: "Orders",
     icon: ClipboardList,
   },
+  {
+    href: "/admin/chat",
+    label: "Chat",
+    icon: MessagesSquare,
+    },
   {
     href: "/admin/products",
     label: "Products",

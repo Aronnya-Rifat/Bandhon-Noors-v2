@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-
+import ChatWidget from "@/components/chat/ChatWidget";
 import CartProvider from "@/components/cart/CartProvider";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
@@ -28,6 +28,8 @@ export default function AppShell({
       <Header />
 
       <CartProvider />
+
+      <ChatWidget />
 
       <main>{children}</main>
 
