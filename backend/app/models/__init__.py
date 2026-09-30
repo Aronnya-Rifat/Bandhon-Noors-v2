@@ -39,3 +39,4 @@ from app.models.chat import (
     ChatMessage,
     ChatSenderType,
 )
+from app.models.review import ProductReview

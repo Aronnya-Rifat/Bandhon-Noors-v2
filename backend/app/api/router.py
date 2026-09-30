@@ -32,8 +32,12 @@ from app.routes.chat import (
 from app.routes.admin_chat import (
     router as admin_chat_router,
 )
-
-
+from app.routes.reviews import (
+    router as reviews_router,
+)
+from app.routes.admin_reviews import (
+    router as admin_reviews_router,
+)
 
 
 
@@ -137,3 +141,10 @@ api_router.include_router(
     admin_chat_router,
 )
 
+api_router.include_router(
+    reviews_router,
+)
+
+api_router.include_router(
+    admin_reviews_router,
+)

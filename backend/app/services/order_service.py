@@ -279,3 +279,115 @@ def get_customer_order(
 
 
     return order
+def cancel_customer_order(
+    db: Session,
+    customer: User,
+    order_id: int,
+) -> Order:
+    """
+    Cancel a customer's pending order
+    and restore its stock.
+    """
+
+    order = (
+        db.query(Order)
+        .options(
+            selectinload(
+                Order.items
+            ),
+            selectinload(
+                Order.payment
+            ),
+        )
+        .filter(
+            Order.id == order_id,
+            Order.customer_id
+            == customer.id,
+        )
+        .first()
+    )
+
+    if order is None:
+        raise ValueError(
+            "Order not found"
+        )
+
+    if (
+        order.status
+        != OrderStatus.PENDING
+    ):
+        raise ValueError(
+            "Only pending orders can be cancelled"
+        )
+
+    for item in order.items:
+        variant = (
+            db.query(
+                ProductVariant
+            )
+            .filter(
+                ProductVariant.id
+                == item.variant_id
+            )
+            .first()
+        )
+
+        if variant is None:
+            raise ValueError(
+                f"Variant {item.variant_id} not found"
+            )
+
+        variant.stock_quantity += (
+            item.quantity
+        )
+
+        db.add(
+            InventoryTransaction(
+                variant_id=variant.id,
+                change_amount=(
+                    item.quantity
+                ),
+                transaction_type=(
+                    InventoryTransactionType
+                    .RETURN
+                ),
+                note=(
+                    f"Stock returned from "
+                    f"customer-cancelled "
+                    f"order #{order.id}"
+                ),
+                created_by=customer.id,
+            )
+        )
+
+    if (
+        order.payment is not None
+        and order.payment.payment_status
+        == PaymentStatus.PENDING
+    ):
+        order.payment.payment_status = (
+            PaymentStatus.FAILED
+        )
+
+    order.status = (
+        OrderStatus.CANCELLED
+    )
+
+    db.commit()
+    db.refresh(order)
+
+    return (
+        db.query(Order)
+        .options(
+            selectinload(
+                Order.items
+            ),
+            selectinload(
+                Order.payment
+            ),
+        )
+        .filter(
+            Order.id == order.id
+        )
+        .first()
+    )

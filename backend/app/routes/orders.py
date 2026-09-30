@@ -18,6 +18,7 @@ from app.schemas.order import (
 )
 
 from app.services.order_service import (
+    cancel_customer_order,
     create_order,
     get_customer_orders,
     get_customer_order,
@@ -98,7 +99,40 @@ def list_orders(
         customer=user,
     )
 
+@router.patch(
+    "/{order_id}/cancel",
+    response_model=OrderResponse,
+)
+def cancel_order(
+    order_id: int,
+    user: User = Depends(
+        get_current_user
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Cancel the authenticated customer's
+    pending order.
+    """
 
+    require_customer(user)
+
+    try:
+        return cancel_customer_order(
+            db=db,
+            customer=user,
+            order_id=order_id,
+        )
+
+    except ValueError as error:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
+        )
 
 @router.get(
     "/{order_id}",
