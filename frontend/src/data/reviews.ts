@@ -11,6 +11,8 @@ export const featuredReviews: Review[] = [
       "Beautiful quality and elegant design. Loved the finishing.",
     created_at:
       "2026-01-01",
+      product_id: 0,
+verified_purchase: false,
   },
 
 
@@ -22,6 +24,8 @@ export const featuredReviews: Review[] = [
       "The fabric quality was amazing. Highly recommended.",
     created_at:
       "2026-01-02",
+      product_id: 0,
+verified_purchase: false,
   },
 
 
@@ -33,6 +37,8 @@ export const featuredReviews: Review[] = [
       "Beautiful traditional style with modern touch.",
     created_at:
       "2026-01-03",
+      product_id: 0,
+verified_purchase: false,
   },
 
 ];

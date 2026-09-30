@@ -33,6 +33,7 @@ export default function OrderSummaryCard({
   order,
   showAddress = false,
   defaultExpanded = false,
+  detailsHref,
 }: OrderSummaryCardProps) {
   return (
     <article className="rounded-xl border border-pink-100 bg-white">
@@ -58,7 +59,9 @@ export default function OrderSummaryCard({
             {statusLabels[order.status]}
           </span>
         </div>
-        {detailsHref && (
+        
+      </div>
+      {detailsHref && (
           <div className="border-t border-pink-100 px-4 py-2">
             <Link
               href={detailsHref}
@@ -68,8 +71,6 @@ export default function OrderSummaryCard({
             </Link>
           </div>
         )}
-      </div>
-
       <details open={defaultExpanded} className="border-t border-pink-100">
         <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-pink-600">
           View order details

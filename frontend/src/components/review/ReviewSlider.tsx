@@ -140,7 +140,7 @@ export default function ReviewSlider({
                       "
                     >
 
-                      "{review.comment}"
+                      &ldquo;{review.comment}&rdquo;
 
                     </p>
 

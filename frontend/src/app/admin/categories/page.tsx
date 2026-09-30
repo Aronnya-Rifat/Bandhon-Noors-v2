@@ -57,12 +57,7 @@ export default function AdminCategoriesPage() {
   const [message, setMessage] =
     useState<string | null>(null);
 
-  async function refreshCategories() {
-    const data =
-      await getCategories();
-
-    setCategories(data);
-  }
+  
 
   useEffect(() => {
     let cancelled = false;

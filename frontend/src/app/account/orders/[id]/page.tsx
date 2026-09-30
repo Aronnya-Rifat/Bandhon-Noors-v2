@@ -1,48 +1,35 @@
 "use client";
 
-import {
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import {
-  useEffect,
-  useState,
-} from "react";
-import {
-  useParams,
-} from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
 import OrderSummaryCard from "@/components/order/OrderSummaryCard";
 import { ApiError } from "@/lib/api";
 import {
+  cancelCustomerOrder,
   getCustomerOrder,
 } from "@/services/order-service";
 import { useAuthStore } from "@/store/auth-store";
-import type {
-  Order,
-} from "@/types/order";
+import type { Order } from "@/types/order";
 
 export default function CustomerOrderPage() {
   const params = useParams<{
     id: string;
   }>();
 
-  const token =
-    useAuthStore(
-      (state) => state.token,
-    );
+  const token = useAuthStore((state) => state.token);
 
-  const [order, setOrder] =
-    useState<Order | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const orderId =
-    Number(params.id);
+  const orderId = Number(params.id);
 
   useEffect(() => {
     if (!token) {
@@ -50,13 +37,8 @@ export default function CustomerOrderPage() {
       return;
     }
 
-    if (
-      !Number.isInteger(orderId) ||
-      orderId < 1
-    ) {
-      setError(
-        "Invalid order number.",
-      );
+    if (!Number.isInteger(orderId) || orderId < 1) {
+      setError("Invalid order number.");
       setIsLoading(false);
       return;
     }
@@ -69,11 +51,7 @@ export default function CustomerOrderPage() {
       setError(null);
 
       try {
-        const data =
-          await getCustomerOrder(
-            accessToken,
-            orderId,
-          );
+        const data = await getCustomerOrder(accessToken, orderId);
 
         if (!cancelled) {
           setOrder(data);
@@ -98,10 +76,7 @@ export default function CustomerOrderPage() {
     return () => {
       cancelled = true;
     };
-  }, [
-    token,
-    orderId,
-  ]);
+  }, [token, orderId]);
 
   if (!token) {
     return (
@@ -111,9 +86,7 @@ export default function CustomerOrderPage() {
             Login Required
           </h1>
 
-          <p className="mt-4 text-gray-600">
-            Log in to view this order.
-          </p>
+          <p className="mt-4 text-gray-600">Log in to view this order.</p>
 
           <Link
             href="/account/login"
@@ -125,7 +98,39 @@ export default function CustomerOrderPage() {
       </main>
     );
   }
+  async function handleCancelOrder() {
+    if (!token || !order || order.status !== "PENDING") {
+      return;
+    }
 
+    const confirmed = window.confirm(`Cancel order #${order.id}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsCancelling(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const updated = await cancelCustomerOrder(token, order.id);
+
+      setOrder(updated);
+
+      setMessage(
+        "Your order has been cancelled and its reserved stock was restored.",
+      );
+    } catch (requestError) {
+      setError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : "Unable to cancel the order.",
+      );
+    } finally {
+      setIsCancelling(false);
+    }
+  }
   return (
     <main className="container py-16">
       <div className="mx-auto max-w-3xl">
@@ -134,28 +139,23 @@ export default function CustomerOrderPage() {
           className="inline-flex items-center gap-2 text-sm text-pink-600 hover:underline"
         >
           <ArrowLeft size={17} />
-
           My Orders
         </Link>
-
-        <h1 className="mt-5 text-3xl font-semibold text-[#3F312B]">
-          {order
-            ? `Order #${order.id}`
-            : "Order Details"}
-        </h1>
-
-        {isLoading && (
-          <p className="mt-8 text-gray-500">
-            Loading order...
+        {message && (
+          <p className="mb-5 border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {message}
           </p>
         )}
 
+        <h1 className="mt-5 text-3xl font-semibold text-[#3F312B]">
+          {order ? `Order #${order.id}` : "Order Details"}
+        </h1>
+
+        {isLoading && <p className="mt-8 text-gray-500">Loading order...</p>}
+
         {error && (
           <div className="mt-8 border border-red-200 bg-red-50 p-5">
-            <p
-              role="alert"
-              className="text-red-700"
-            >
+            <p role="alert" className="text-red-700">
               {error}
             </p>
 
@@ -170,22 +170,34 @@ export default function CustomerOrderPage() {
 
         {order && (
           <div className="mt-8">
-            <OrderSummaryCard
-              order={order}
-              showAddress
-              defaultExpanded
-            />
+            <OrderSummaryCard order={order} showAddress defaultExpanded />
+            {order.status === "PENDING" && (
+              <div className="mt-5 border border-red-100 bg-white p-5">
+                <h2 className="font-semibold text-gray-900">Cancel Order</h2>
 
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  You can cancel this order while it is still pending. After the
+                  order is confirmed, contact customer support for help.
+                </p>
+
+                <button
+                  type="button"
+                  disabled={isCancelling}
+                  onClick={() => void handleCancelOrder()}
+                  className="mt-4 border border-red-200 px-5 py-2 text-sm text-red-600 disabled:opacity-50"
+                >
+                  {isCancelling ? "Cancelling..." : "Cancel Order"}
+                </button>
+              </div>
+            )}
             <div className="mt-6 rounded-xl border border-pink-100 bg-pink-50 p-5">
               <h2 className="font-semibold text-[#3F312B]">
                 Need help with this order?
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                Open the support chat and include
-                order number #{order.id}. An
-                administrator can reply directly
-                in the chat.
+                Open the support chat and include order number #{order.id}. An
+                administrator can reply directly in the chat.
               </p>
             </div>
           </div>

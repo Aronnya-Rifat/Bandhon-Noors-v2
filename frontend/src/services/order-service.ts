@@ -41,3 +41,16 @@ export function getCustomerOrder(
     },
   );
 }
+
+export function cancelCustomerOrder(
+  token: string,
+  orderId: number,
+): Promise<Order> {
+  return apiRequest<Order>(
+    `/orders/${orderId}/cancel`,
+    {
+      method: "PATCH",
+      token,
+    },
+  );
+}

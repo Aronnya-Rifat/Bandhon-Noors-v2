@@ -91,10 +91,8 @@ export default function ProductListing({
 
   const router = useRouter();
   const categoriesWithSizes = new Set(["women", "men", "baby"]);
-
-  const showSizeFilter = categoriesWithSizes.has(selectedCategory);
-
-  const visibleSizes = showSizeFilter ? availableSizes : [];
+  
+  
 
   function navigateToProducts(
     overrides: {

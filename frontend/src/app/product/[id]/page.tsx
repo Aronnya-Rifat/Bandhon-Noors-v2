@@ -26,7 +26,7 @@ import {
   getProductById,
   getProductsByCategory,
 } from "@/services/product-service";
-import { productReviews } from "@/data/product-reviews";
+import { getProductReviews } from "@/services/review-service";
 
 interface ProductPageProps {
   params: Promise<{
@@ -43,22 +43,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const product = await getProductById(productId).catch(
-    (error: unknown) => {
-      if (
-        error instanceof ApiError &&
-        error.status === 404
-      ) {
-        notFound();
-      }
+  const product = await getProductById(productId).catch((error: unknown) => {
+    if (error instanceof ApiError && error.status === 404) {
+      notFound();
+    }
 
-      throw error;
-    },
-  );
-
-  const categoryProducts = await getProductsByCategory(
-    product.category_id,
-  );
+    throw error;
+  });
+  const reviews = await getProductReviews(product.id);
+  const categoryProducts = await getProductsByCategory(product.category_id);
 
   const relatedProducts = categoryProducts
     .filter((item) => item.id !== product.id)
@@ -90,7 +83,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductPurchase product={product} variants={product.variants} />
         </div>
       </div>
-      <ProductReviews reviews={productReviews} />
+      <ProductReviews productId={product.id} initialReviews={reviews} />
 
       <RelatedProducts products={relatedProducts} />
     </main>

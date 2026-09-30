@@ -13,6 +13,7 @@ import {
   Users,
   UserCog,
   MessagesSquare,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,7 +39,7 @@ const navigationItems = [
     href: "/admin/chat",
     label: "Chat",
     icon: MessagesSquare,
-    },
+  },
   {
     href: "/admin/products",
     label: "Products",
@@ -63,6 +64,11 @@ const navigationItems = [
     href: "/admin/inventory",
     label: "Inventory",
     icon: Boxes,
+  },
+  {
+    href: "/admin/reviews",
+    label: "Reviews",
+    icon: Star,
   },
   {
     href: "/admin/homepage",

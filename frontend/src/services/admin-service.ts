@@ -23,6 +23,7 @@ AdminCustomerPage,
 AdminInvitation,
 AdminInvitationCreate,
 AdminStaffUser,
+AdminReviewPage,
 } from "@/types/admin";
 import type {
   Product,
@@ -443,6 +444,58 @@ export function updateAdminStaffStatus(
       body: {
         is_active: isActive,
       },
+    },
+  );
+}
+export function getAdminReviews(
+  token: string,
+  options: {
+    page?: number;
+    visibility?: "visible" | "hidden";
+  } = {},
+): Promise<AdminReviewPage> {
+  const searchParams =
+    new URLSearchParams();
+
+  searchParams.set(
+    "page",
+    String(options.page ?? 1),
+  );
+
+  searchParams.set(
+    "page_size",
+    "50",
+  );
+
+  if (options.visibility) {
+    searchParams.set(
+      "visibility",
+      options.visibility,
+    );
+  }
+
+  return apiRequest<AdminReviewPage>(
+    `/admin/reviews?${searchParams.toString()}`,
+    {
+      token,
+    },
+  );
+}
+
+
+export function updateAdminReviewVisibility(
+  token: string,
+  reviewId: number,
+  isVisible: boolean,
+): Promise<{
+  id: number;
+  is_visible: boolean;
+}> {
+  return apiRequest(
+    `/admin/reviews/${reviewId}/visibility?is_visible=${isVisible}`,
+    {
+      method: "PATCH",
+      token,
     },
   );
 }

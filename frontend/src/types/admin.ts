@@ -172,3 +172,24 @@ export interface AdminStaffUser {
   created_at: string;
   updated_at: string;
 }
+
+export interface AdminReview {
+  id: number;
+  product_id: number;
+  product_name: string;
+  customer_id: number;
+  customer_name: string;
+  order_id: number;
+  rating: number;
+  comment: string;
+  is_visible: boolean;
+  created_at: string;
+}
+
+export interface AdminReviewPage {
+  items: AdminReview[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}

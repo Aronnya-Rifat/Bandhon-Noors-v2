@@ -128,7 +128,7 @@ export default function CustomerReviews() {
                     mb-4
                   "
                 >
-                  "
+                  &ldquo;
                 </div>
 
 
