@@ -57,7 +57,38 @@ def get_product_reviews(
         )
         for review, customer_name in rows
     ]
+def get_featured_reviews(
+    db: Session,
+    limit: int = 8,
+) -> list[dict]:
+    rows = (
+        db.query(
+            ProductReview,
+            User.name,
+        )
+        .join(
+            User,
+            User.id == ProductReview.customer_id,
+        )
+        .filter(
+            ProductReview.is_visible.is_(True),
+            ProductReview.rating >= 4,
+        )
+        .order_by(
+            ProductReview.rating.desc(),
+            ProductReview.created_at.desc(),
+        )
+        .limit(limit)
+        .all()
+    )
 
+    return [
+        serialize_review(
+            review=review,
+            customer_name=customer_name,
+        )
+        for review, customer_name in rows
+    ]
 
 def create_product_review(
     db: Session,

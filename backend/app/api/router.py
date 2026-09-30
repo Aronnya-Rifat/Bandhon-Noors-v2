@@ -33,6 +33,7 @@ from app.routes.admin_chat import (
     router as admin_chat_router,
 )
 from app.routes.reviews import (
+    public_router as public_reviews_router,
     router as reviews_router,
 )
 from app.routes.admin_reviews import (
@@ -144,7 +145,9 @@ api_router.include_router(
 api_router.include_router(
     reviews_router,
 )
-
+api_router.include_router(
+    public_reviews_router,
+)
 api_router.include_router(
     admin_reviews_router,
 )

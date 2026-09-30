@@ -2,6 +2,7 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Query,
     status,
 )
 from sqlalchemy.orm import Session
@@ -16,6 +17,7 @@ from app.schemas.review import (
 from app.services.review_service import (
     create_product_review,
     get_product_reviews,
+    get_featured_reviews,
 )
 
 
@@ -23,8 +25,26 @@ router = APIRouter(
     prefix="/products",
     tags=["Product Reviews"],
 )
-
-
+public_router = APIRouter(
+    prefix="/reviews",
+    tags=["Reviews"],
+)
+@public_router.get(
+    "/featured",
+    response_model=list[ProductReviewResponse],
+)
+def list_featured_reviews(
+    limit: int = Query(
+        default=8,
+        ge=1,
+        le=20,
+    ),
+    db: Session = Depends(get_db),
+):
+    return get_featured_reviews(
+        db=db,
+        limit=limit,
+    )
 @router.get(
     "/{product_id}/reviews",
     response_model=list[ProductReviewResponse],
