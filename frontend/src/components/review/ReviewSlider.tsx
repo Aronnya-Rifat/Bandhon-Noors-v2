@@ -28,9 +28,11 @@ export default function ReviewSlider({
   reviews,
 }: ReviewSliderProps) {
 
-
+if (reviews.length === 0) {
+  return null;
+}
   return (
-
+    
     <section
       className="
         py-20

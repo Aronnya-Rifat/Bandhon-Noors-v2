@@ -19,9 +19,15 @@ import BrandStory from "./BrandStory";
 import CraftsmanshipSection from "./CraftsmanshipSection";
 import ReviewSlider from "@/components/review/ReviewSlider";
 
-import { featuredReviews } from "@/data/reviews";
+import {
+  getFeaturedReviews,
+} from "@/services/review-service";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featuredReviews =
+    await getFeaturedReviews().catch(
+      () => [],
+    );
   return (
     <main>
       {/* Main visual introduction */}

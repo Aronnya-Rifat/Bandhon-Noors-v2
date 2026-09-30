@@ -29,3 +29,10 @@ export function createProductReview(
     },
   );
 }
+export function getFeaturedReviews(
+  limit = 8,
+): Promise<Review[]> {
+  return apiRequest<Review[]>(
+    `/reviews/featured?limit=${limit}`,
+  );
+}
