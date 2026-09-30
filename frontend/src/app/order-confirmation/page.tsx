@@ -123,13 +123,14 @@ export default function OrderConfirmationPage() {
         )}
 
         {order && (
-          <div className="mt-10">
-            <OrderSummaryCard
-              order={order}
-              showAddress
-              defaultExpanded
-            />
-          </div>
+          <OrderSummaryCard
+            order={order}
+            showAddress
+            defaultExpanded
+            detailsHref={
+              `/account/orders/${order.id}`
+            }
+          />
         )}
 
         <div className="mt-8 flex flex-wrap justify-center gap-4">

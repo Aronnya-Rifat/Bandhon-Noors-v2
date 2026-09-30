@@ -1,10 +1,11 @@
 import { formatCurrency } from "@/lib/utils";
 import type { Order } from "@/types/order";
-
+import Link from "next/link";
 interface OrderSummaryCardProps {
   order: Order;
   showAddress?: boolean;
   defaultExpanded?: boolean;
+  detailsHref?: string;
 }
 
 const statusLabels: Record<Order["status"], string> = {
@@ -57,6 +58,16 @@ export default function OrderSummaryCard({
             {statusLabels[order.status]}
           </span>
         </div>
+        {detailsHref && (
+          <div className="border-t border-pink-100 px-4 py-2">
+            <Link
+              href={detailsHref}
+              className="text-sm font-medium text-pink-600 hover:underline"
+            >
+              Open order page →
+            </Link>
+          </div>
+        )}
       </div>
 
       <details open={defaultExpanded} className="border-t border-pink-100">

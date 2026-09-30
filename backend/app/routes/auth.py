@@ -9,13 +9,19 @@ from app.schemas.auth import (
     TokenResponse,
     RegisterRequest,
 )
-
+from app.schemas.user import (
+    UserPasswordChange,
+    UserProfileUpdate,
+    UserResponse,
+)
 from app.schemas.user import UserResponse
 
 from app.services.auth_service import (
     authenticate_user,
+    change_user_password,
     create_user_token,
     register_user,
+    update_user_profile,
 )
 
 
@@ -99,3 +105,55 @@ def current_user_profile(
     """
 
     return user
+@router.patch(
+    "/me",
+    response_model=UserResponse,
+)
+def update_current_user_profile(
+    data: UserProfileUpdate,
+    user: User = Depends(
+        get_current_user
+    ),
+    db: Session = Depends(get_db),
+):
+    try:
+        return update_user_profile(
+            db=db,
+            user=user,
+            data=data,
+        )
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
+        )
+
+
+@router.post(
+    "/me/password",
+    response_model=UserResponse,
+)
+def update_current_user_password(
+    data: UserPasswordChange,
+    user: User = Depends(
+        get_current_user
+    ),
+    db: Session = Depends(get_db),
+):
+    try:
+        return change_user_password(
+            db=db,
+            user=user,
+            data=data,
+        )
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
+        )

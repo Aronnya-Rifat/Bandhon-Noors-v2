@@ -87,3 +87,13 @@ export interface AuthSession {
 
   access_token: string;
 }
+export interface UserProfileUpdate {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+}
+
+export interface UserPasswordChange {
+  current_password: string;
+  new_password: string;
+}

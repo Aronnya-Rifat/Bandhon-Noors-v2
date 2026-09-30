@@ -5,6 +5,8 @@ import type {
   RegisterRequest,
   TokenResponse,
   User,
+  UserPasswordChange,
+UserProfileUpdate,
 } from "@/types/user";
 
 export function loginCustomer(
@@ -38,6 +40,33 @@ export function getCurrentUser(
     "/me",
     {
       token,
+    },
+  );
+}
+export function updateCurrentUser(
+  token: string,
+  update: UserProfileUpdate,
+): Promise<User> {
+  return apiRequest<User>(
+    "/me",
+    {
+      method: "PATCH",
+      token,
+      body: update,
+    },
+  );
+}
+
+export function changeCurrentUserPassword(
+  token: string,
+  update: UserPasswordChange,
+): Promise<User> {
+  return apiRequest<User>(
+    "/me/password",
+    {
+      method: "POST",
+      token,
+      body: update,
     },
   );
 }

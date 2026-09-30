@@ -14,9 +14,16 @@ from app.models.user import (
     User,
     UserRole,
 )
-
+from app.schemas.user import (
+    UserPasswordChange,
+    UserProfileUpdate,
+)
 from app.schemas.auth import RegisterRequest
-from app.core.security import hash_password
+from app.core.security import (
+    create_access_token,
+    hash_password,
+    verify_password,
+)
 
 def authenticate_user(
     db: Session,
@@ -137,6 +144,113 @@ def register_user(
             AdminInvitationStatus.USED
         )
 
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+def update_user_profile(
+    db: Session,
+    user: User,
+    data: UserProfileUpdate,
+) -> User:
+    """
+    Update the authenticated user's
+    basic profile information.
+    """
+
+    if data.name is not None:
+        user.name = (
+            data.name.strip()
+        )
+
+    if data.email is not None:
+        email = (
+            str(data.email)
+            .strip()
+            .lower()
+        )
+
+        existing_email = (
+            db.query(User)
+            .filter(
+                User.email == email,
+                User.id != user.id,
+            )
+            .first()
+        )
+
+        if existing_email:
+            raise ValueError(
+                "Email already registered"
+            )
+
+        user.email = email
+
+    if (
+        "phone"
+        in data.model_fields_set
+    ):
+        phone = (
+            data.phone.strip()
+            if data.phone
+            else None
+        )
+
+        if phone:
+            existing_phone = (
+                db.query(User)
+                .filter(
+                    User.phone == phone,
+                    User.id != user.id,
+                )
+                .first()
+            )
+
+            if existing_phone:
+                raise ValueError(
+                    "Phone number already registered"
+                )
+
+        user.phone = phone
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+def change_user_password(
+    db: Session,
+    user: User,
+    data: UserPasswordChange,
+) -> User:
+    """
+    Change the authenticated user's
+    password.
+    """
+
+    if not verify_password(
+        data.current_password,
+        user.password_hash,
+    ):
+        raise ValueError(
+            "Current password is incorrect"
+        )
+
+    if verify_password(
+        data.new_password,
+        user.password_hash,
+    ):
+        raise ValueError(
+            "New password must be different"
+        )
+
+    user.password_hash = (
+        hash_password(
+            data.new_password
+        )
+    )
 
     db.commit()
     db.refresh(user)
