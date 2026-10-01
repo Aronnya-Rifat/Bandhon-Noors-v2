@@ -92,9 +92,8 @@ class OrderResponse(BaseModel):
 
     shipping_address: str
     
-    courier_name: str | None
-
-    tracking_number: str | None
+    courier_name: str | None = None
+    tracking_number: str | None = None
 
     items: list[OrderItemResponse]
 

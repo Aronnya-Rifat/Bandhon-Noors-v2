@@ -167,6 +167,8 @@ def get_all_orders(
                     order.total_amount,
                 "shipping_address":
                     order.shipping_address,
+                "courier_name": order.courier_name,
+                "tracking_number": order.tracking_number,
                 "items":
                     order.items,
                 "payment":
