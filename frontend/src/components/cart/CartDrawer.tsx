@@ -24,13 +24,8 @@ interface CartDrawerProps {
 export default function CartDrawer({ open, onClose }: CartDrawerProps) {
   const items = useCartStore((state) => state.items);
   const router = useRouter();
-  const {
-    removeItem,
-    updateQuantity,
-    clearCart,
-    error,
-    isWorking,
-  } = useCartActions();
+  const { removeItem, updateQuantity, clearCart, error, isWorking } =
+    useCartActions();
   return (
     <>
       {/* Overlay */}
@@ -130,98 +125,89 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                 space-y-5
                 "
               >
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="
+                {items.map((item) => {
+                  const optionLabel = [
+                    item.variant.color_theme,
+                    item.variant.size,
+                  ]
+                    .filter(Boolean)
+                    .join(" / ");
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="
                         border-b
                         border-pink-100
                         pb-5
                         "
-                  >
-                    <h3
-                      className="
+                    >
+                      <h3
+                        className="
                             font-medium
                             text-gray-800
                         "
-                    >
-                      {item.product.name}
-                    </h3>
+                      >
+                        {item.product.name}
+                      </h3>
 
-                    <p
-                      className="
-                            text-sm
-                            text-gray-500
-                            mt-1
-                        "
-                    >
-                      {[
-                        item.variant.color_theme,
-                        item.variant.size,
-                      ]
-                        .filter(Boolean)
-                        .join(" / ") || "Standard option"}                    </p>
+                      {optionLabel && (
+                        <p className="mt-1 text-sm text-gray-500">
+                          {optionLabel}
+                        </p>
+                      )}
 
-                    <p
-                      className="
+                      <p
+                        className="
                             mt-2
                             text-pink-500
                         "
-                    >
-                      {formatCurrency(
-                                item.product.price * item.quantity,
-                              )}
-                    </p>
+                      >
+                        {formatCurrency(item.product.price * item.quantity)}
+                      </p>
 
-                    {/* Quantity */}
+                      {/* Quantity */}
 
-                    <div
-                      className="
+                      <div
+                        className="
                             flex
                             items-center
                             gap-3
                             mt-3
                         "
-                    >
-                      <button
-                      type="button"
-                      disabled={
-                        isWorking ||
-                        item.quantity <= 1
-                      }
-                      aria-label="Decrease quantity"
-                        onClick={() =>
-                          void updateQuantity(
-                            item.id,
-                            Math.max(1, item.quantity - 1),
-                          )
-                        }
-                        className="
+                      >
+                        <button
+                          type="button"
+                          disabled={isWorking || item.quantity <= 1}
+                          aria-label="Decrease quantity"
+                          onClick={() =>
+                            void updateQuantity(
+                              item.id,
+                              Math.max(1, item.quantity - 1),
+                            )
+                          }
+                          className="
                             w-8
                             h-8
                             border
                             rounded-full
                             "
-                      >
-                        -
-                      </button>
+                        >
+                          -
+                        </button>
 
-                      <span>{item.quantity}</span>
+                        <span>{item.quantity}</span>
 
-                      <button
-                        type="button"
-                        disabled={
-                        isWorking ||
-                        item.quantity >=
-                          item.variant.stock_quantity
-                      }
-                        onClick={() =>
-                          void updateQuantity(
-                            item.id,
-                            item.quantity + 1,
-                          )
-                        }
-                        className="
+                        <button
+                          type="button"
+                          disabled={
+                            isWorking ||
+                            item.quantity >= item.variant.stock_quantity
+                          }
+                          onClick={() =>
+                            void updateQuantity(item.id, item.quantity + 1)
+                          }
+                          className="
                           w-8
                           h-8
                           rounded-full
@@ -229,28 +215,27 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                           disabled:cursor-not-allowed
                           disabled:opacity-40
                         "
-                        aria-label="Increase quantity"
-                      >
-                        +
-                      </button>
-                    </div>
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
+                      </div>
 
-                    <button
-                      type="button"
-                      disabled={isWorking}
-                      onClick={() =>
-                        void removeItem(item.id)
-                      }
-                      className="
+                      <button
+                        type="button"
+                        disabled={isWorking}
+                        onClick={() => void removeItem(item.id)}
+                        className="
                             mt-3
                             text-sm
                             text-red-400
                         "
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Cart Summary */}
@@ -269,30 +254,24 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
       font-semibold
       text-gray-800
     "
-                > 
+                >
                   <span>Subtotal</span>
 
                   <span>
                     {formatCurrency(
                       items.reduce(
                         (total, item) =>
-                          total +
-                          item.product.price *
-                            item.quantity,
+                          total + item.product.price * item.quantity,
                         0,
                       ),
                     )}
                   </span>
                 </div>
                 {error && (
-                  <p
-                    role="alert"
-                    className="mb-4 text-sm text-red-600"
-                  >
+                  <p role="alert" className="mb-4 text-sm text-red-600">
                     {error}
                   </p>
                 )}
-
 
                 <button
                   type="button"

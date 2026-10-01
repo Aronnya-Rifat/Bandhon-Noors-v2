@@ -167,7 +167,7 @@ def create_order(
                     )
                     if value
                 )
-                or "Standard option"
+                or "Standard"
             ),
             quantity=item.quantity,
             unit_price=price,

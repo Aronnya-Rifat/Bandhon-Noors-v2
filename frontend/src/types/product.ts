@@ -128,6 +128,7 @@ export interface Product {
  * - variants
  */
 export interface ProductDetailResponse extends ProductCardProduct {
+  has_variants: boolean;
   description: string | null;
   weight: number | null;
   size_chart: string | null;

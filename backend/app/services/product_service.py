@@ -72,42 +72,45 @@ def create_product(
         raise ValueError("Category not found")
 
     temporary_code = f"TEMP-{uuid4().hex}"
-
-    product = Product(
-        category_id=data.category_id,
-        product_code=temporary_code,
-        name=data.name.strip(),
-        description=data.description,
-        price=data.price,
-        weight=data.weight,
-        size_chart=data.size_chart,
-        has_variants=data.has_variants,
-        is_active=True,
-        is_featured=data.is_featured,
-    )
-
-    db.add(product)
-    db.flush()
-
-    product.product_code = f"BN-P-{product.id:06d}"
-
-    if not data.has_variants:
-        standard_variant = ProductVariant(
-            product_id=product.id,
-            variant_code=f"{product.product_code}-STD",
-            color_theme=None,
-            size=None,
-            stock_quantity=data.initial_stock,
-            low_stock_threshold=data.low_stock_threshold,
-            additional_price=None,
+    try:
+        product = Product(
+            category_id=data.category_id,
+            product_code=temporary_code,
+            name=data.name.strip(),
+            description=data.description,
+            price=data.price,
+            weight=data.weight,
+            size_chart=data.size_chart,
+            has_variants=data.has_variants,
+            is_active=True,
+            is_featured=data.is_featured,
         )
 
-        db.add(standard_variant)
+        db.add(product)
+        db.flush()
 
-    db.commit()
-    db.refresh(product)
+        product.product_code = f"BN-P-{product.id:06d}"
 
-    return product
+        if not data.has_variants:
+            standard_variant = ProductVariant(
+                product_id=product.id,
+                variant_code=f"{product.product_code}-STD",
+                color_theme=None,
+                size=None,
+                stock_quantity=data.initial_stock,
+                low_stock_threshold=data.low_stock_threshold,
+                additional_price=None,
+            )
+
+            db.add(standard_variant)
+
+        db.commit()
+        db.refresh(product)
+
+        return product
+    except Exception:
+        db.rollback()
+        raise
 
 
 def get_products(
@@ -636,6 +639,7 @@ def get_product_detail(
         )
     return {
         **_product_card_data(product),
+        "has_variants": product.has_variants,
         "description": product.description,
         "weight": product.weight,
         "size_chart": product.size_chart,

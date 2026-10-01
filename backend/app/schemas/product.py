@@ -195,7 +195,7 @@ class ProductDetailResponse(ProductListResponse):
     """
     Customer product page response.
     """
-
+    has_variants: bool
     description: str | None
 
     weight: float | None
@@ -205,7 +205,7 @@ class ProductDetailResponse(ProductListResponse):
     media: list[ProductMediaPublic]
 
     variants: list[ProductVariantPublic]
-
+    
 
     class Config:
         from_attributes = True
