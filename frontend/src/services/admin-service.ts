@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/api";
 import type {
+  AdminOrderPage,
   Order,
   OrderStatus,
 } from "@/types/order";
@@ -42,9 +43,41 @@ export function getAdminDashboard(
 
 export function getAdminOrders(
   token: string,
-): Promise<Order[]> {
-  return apiRequest<Order[]>(
-    "/admin/orders",
+  options: {
+    page?: number;
+    query?: string;
+    status?: OrderStatus | "";
+  } = {},
+): Promise<AdminOrderPage> {
+  const searchParams =
+    new URLSearchParams();
+
+  searchParams.set(
+    "page",
+    String(options.page ?? 1),
+  );
+
+  searchParams.set(
+    "page_size",
+    "50",
+  );
+
+  if (options.query?.trim()) {
+    searchParams.set(
+      "query",
+      options.query.trim(),
+    );
+  }
+
+  if (options.status) {
+    searchParams.set(
+      "status",
+      options.status,
+    );
+  }
+
+  return apiRequest<AdminOrderPage>(
+    `/admin/orders?${searchParams.toString()}`,
     {
       token,
     },

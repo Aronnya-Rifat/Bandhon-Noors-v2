@@ -2,9 +2,12 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Query,
     status,
 )
-
+from app.schemas.admin_order import (
+    AdminOrderPage,
+)
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -34,20 +37,38 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[OrderResponse],
+    response_model=AdminOrderPage,
 )
 def list_orders(
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=50,
+        ge=1,
+        le=50,
+    ),
+    query: str | None = None,
+    order_status: (
+        OrderStatus | None
+    ) = Query(
+        default=None,
+        alias="status",
+    ),
+    db: Session = Depends(
+        get_db
+    ),
+    admin: User = Depends(
+        require_admin
+    ),
 ):
-    """
-    View all customer orders.
-
-    ADMIN and SUPER_ADMIN only.
-    """
-
     return get_all_orders(
         db=db,
+        page=page,
+        page_size=page_size,
+        query=query,
+        order_status=order_status,
     )
 
 

@@ -77,3 +77,16 @@ export interface Payment {
   transaction_id: string | null;
   created_at: string;
 }
+export interface AdminOrder
+  extends Order {
+  customer_name: string;
+  customer_email: string;
+}
+
+export interface AdminOrderPage {
+  items: AdminOrder[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}

@@ -2,7 +2,9 @@ from sqlalchemy.orm import (
     Session,
     selectinload,
 )
+from math import ceil
 
+from sqlalchemy import or_
 from app.models.order import (
     Order,
     OrderStatus,
@@ -22,13 +24,20 @@ from app.models.user import User
 
 def get_all_orders(
     db: Session,
-) -> list[Order]:
-    """
-    Return all customer orders.
-    """
-
-    return (
+    page: int,
+    page_size: int,
+    query: str | None = None,
+    order_status: (
+        OrderStatus | None
+    ) = None,
+) -> dict:
+    orders_query = (
         db.query(Order)
+        .join(
+            User,
+            User.id
+            == Order.customer_id,
+        )
         .options(
             selectinload(
                 Order.items
@@ -37,13 +46,146 @@ def get_all_orders(
                 Order.payment
             ),
         )
-        .order_by(
-            Order.created_at.desc()
+    )
+
+    if order_status is not None:
+        orders_query = (
+            orders_query.filter(
+                Order.status
+                == order_status
+            )
         )
+
+    clean_query = (
+        query.strip()
+        if query
+        else ""
+    )
+
+    if clean_query:
+        filters = [
+            User.name.ilike(
+                f"%{clean_query}%"
+            ),
+            User.email.ilike(
+                f"%{clean_query}%"
+            ),
+            User.phone.ilike(
+                f"%{clean_query}%"
+            ),
+        ]
+
+        if clean_query.isdigit():
+            filters.append(
+                Order.id
+                == int(clean_query)
+            )
+
+        orders_query = (
+            orders_query.filter(
+                or_(*filters)
+            )
+        )
+
+    total = orders_query.count()
+
+    total_pages = max(
+        1,
+        ceil(
+            total / page_size
+        ),
+    )
+
+    page = min(
+        page,
+        total_pages,
+    )
+
+    orders = (
+        orders_query
+        .order_by(
+            Order.created_at.desc(),
+            Order.id.desc(),
+        )
+        .offset(
+            (page - 1)
+            * page_size
+        )
+        .limit(page_size)
         .all()
     )
 
+    customer_ids = {
+        order.customer_id
+        for order in orders
+    }
 
+    customers = {
+        customer.id: customer
+        for customer in (
+            db.query(User)
+            .filter(
+                User.id.in_(
+                    customer_ids
+                )
+            )
+            .all()
+        )
+    }
+
+    items = []
+
+    for order in orders:
+        customer = customers.get(
+            order.customer_id
+        )
+
+        items.append(
+            {
+                "id": order.id,
+                "customer_id":
+                    order.customer_id,
+                "customer_name": (
+                    customer.name
+                    if customer
+                    else "Unknown customer"
+                ),
+                "customer_email": (
+                    customer.email
+                    if customer
+                    else ""
+                ),
+                "status":
+                    order.status,
+                "subtotal":
+                    order.subtotal,
+                "delivery_area":
+                    order.delivery_area,
+                "delivery_charge":
+                    order.delivery_charge,
+                "total_amount":
+                    order.total_amount,
+                "shipping_address":
+                    order.shipping_address,
+                "items":
+                    order.items,
+                "payment":
+                    order.payment,
+                "created_at":
+                    order.created_at,
+                "updated_at":
+                    order.updated_at,
+            }
+        )
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages":
+            total_pages,
+    }
 
 def get_order_by_id(
     db: Session,
