@@ -1,12 +1,16 @@
 from pathlib import Path
 import uuid
-
+from app.services.file_service import (
+    UPLOAD_DIR,
+)
 from PIL import Image, ImageOps
 
 
 
-PROCESSED_DIR = Path(
-    "uploads/products/processed"
+PROCESSED_DIR = (
+    UPLOAD_DIR
+    / "products"
+    / "processed"
 )
 
 
@@ -38,6 +42,9 @@ def create_processed_image(
 
     image = image.convert(
         "RGB"
+    )
+    image = ImageOps.exif_transpose(
+        image
     )
 
     canvas = ImageOps.fit(
@@ -83,9 +90,11 @@ def create_thumbnail(
     """
 
 
-    thumbnail_dir = Path(
-        "uploads/products/thumbnails"
-    )
+    thumbnail_dir = (
+            UPLOAD_DIR
+            / "products"
+            / "thumbnails"
+        )
 
 
     thumbnail_dir.mkdir(
@@ -101,6 +110,9 @@ def create_thumbnail(
 
     image = image.convert(
         "RGB"
+    )
+    image = ImageOps.exif_transpose(
+        image
     )
 
     canvas = ImageOps.fit(
@@ -139,10 +151,11 @@ def create_thumbnail(
     )
     
     
-HOMEPAGE_PROCESSED_DIR = Path(
-    "uploads/homepage/processed"
+HOMEPAGE_PROCESSED_DIR = (
+    UPLOAD_DIR
+    / "homepage"
+    / "processed"
 )
-
 
 
 def create_homepage_image(
@@ -166,7 +179,9 @@ def create_homepage_image(
     image = image.convert(
         "RGB"
     )
-
+    image = ImageOps.exif_transpose(
+        image
+    )
 
     image = ImageOps.fit(
         image,
@@ -202,10 +217,11 @@ def create_homepage_image(
         f"/uploads/homepage/processed/{filename}"
     )
 
-CATEGORY_PROCESSED_DIR = Path(
-    "uploads/categories/processed"
+CATEGORY_PROCESSED_DIR = (
+    UPLOAD_DIR
+    / "categories"
+    / "processed"
 )
-
 
 def create_category_image(
     source_path: str,
@@ -228,7 +244,9 @@ def create_category_image(
     image = image.convert(
         "RGB"
     )
-
+    image = ImageOps.exif_transpose(
+        image
+    )
 
     image.thumbnail(
         (

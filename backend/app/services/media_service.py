@@ -191,7 +191,9 @@ def delete_media(
     delete_file(
         media.file_url
     )
-
+    delete_file(
+        media.thumbnail_url
+    )
 
     db.delete(media)
 

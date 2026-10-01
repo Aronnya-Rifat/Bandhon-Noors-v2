@@ -13,6 +13,7 @@ dependencies = [
     "python-jose[cryptography]",
     "pwdlib[argon2]==0.2.1",
     "pydantic-settings>=2.10,<3",
+    "Pillow==12.3.0",
 ]
 [tool.setuptools.packages.find]
 where = ["."]

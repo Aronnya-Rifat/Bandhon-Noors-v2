@@ -68,7 +68,9 @@ async def upload_product_image(
 
     ADMIN and SUPER_ADMIN only.
     """
-
+    saved_path: str | None = None
+    processed_path: str | None = None
+    thumbnail_path: str | None = None
 
     try:
 
@@ -112,8 +114,18 @@ async def upload_product_image(
 
 
     except ValueError as error:
+        delete_file(saved_path)
+        delete_file(processed_path)
+        delete_file(thumbnail_path)
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),
         )
+
+    except Exception:
+        delete_file(saved_path)
+        delete_file(processed_path)
+        delete_file(thumbnail_path)
+
+        raise

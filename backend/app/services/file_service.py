@@ -1,16 +1,24 @@
-import os
 import uuid
-
+from io import BytesIO
 from pathlib import Path
 
 from fastapi import UploadFile
-
-
-
-PRODUCT_UPLOAD_DIR = Path(
-    "uploads/products"
+from PIL import (
+    Image,
+    UnidentifiedImageError,
 )
 
+
+BACKEND_DIR = (
+    Path(__file__)
+    .resolve()
+    .parents[2]
+)
+
+UPLOAD_DIR = (
+    BACKEND_DIR
+    / "uploads"
+)
 
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg",
@@ -18,9 +26,12 @@ ALLOWED_IMAGE_TYPES = {
     "image/webp",
 }
 
+ALLOWED_IMAGE_FORMATS = {
+    "JPEG",
+    "PNG",
+    "WEBP",
+}
 
-MAX_FILE_SIZE = 5 * 1024 * 1024
-# 5 MB
 ALLOWED_EXTENSIONS = {
     ".jpg",
     ".jpeg",
@@ -28,42 +39,24 @@ ALLOWED_EXTENSIONS = {
     ".webp",
 }
 
-
-def validate_image(
-    file: UploadFile,
-):
-    """
-    Validate uploaded image.
-    """
-
-
-    if file.content_type not in ALLOWED_IMAGE_TYPES:
-        raise ValueError(
-            "Unsupported image type"
-        )
-
+MAX_FILE_SIZE = (
+    5 * 1024 * 1024
+)
 
 
 def generate_filename(
     original_name: str,
-):
-    """
-    Generate safe unique filename.
-    """
-
-
+) -> str:
     extension = (
         Path(original_name)
         .suffix
         .lower()
     )
 
-
     if extension not in ALLOWED_EXTENSIONS:
         raise ValueError(
             "Unsupported file extension"
         )
-
 
     return (
         f"{uuid.uuid4()}"
@@ -71,83 +64,149 @@ def generate_filename(
     )
 
 
+def verify_image_content(
+    content: bytes,
+) -> None:
+    try:
+        with Image.open(
+            BytesIO(content)
+        ) as image:
+            image.verify()
+
+            if (
+                image.format
+                not in ALLOWED_IMAGE_FORMATS
+            ):
+                raise ValueError(
+                    "Unsupported image format"
+                )
+
+    except (
+        UnidentifiedImageError,
+        OSError,
+        Image.DecompressionBombError,
+    ) as error:
+        raise ValueError(
+            "The uploaded file is not a valid image"
+        ) from error
+
 
 async def save_image(
     file: UploadFile,
     folder: str = "products",
 ) -> str:
-    """
-    Save uploaded image.
+    if (
+        file.content_type
+        not in ALLOWED_IMAGE_TYPES
+    ):
+        raise ValueError(
+            "Unsupported image type"
+        )
 
-    Returns URL path.
-    """
-
-
-    validate_image(file)
-
-
-    upload_dir = Path(
-        f"uploads/{folder}"
+    original_name = (
+        file.filename
+        or "upload"
     )
-
-
-    upload_dir.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
 
     filename = generate_filename(
-        file.filename
-    )
-
-
-    file_path = (
-        upload_dir
-        /
-        filename
+        original_name
     )
 
     content = await file.read(
         MAX_FILE_SIZE + 1
     )
 
+    if not content:
+        raise ValueError(
+            "The uploaded file is empty"
+        )
 
     if len(content) > MAX_FILE_SIZE:
         raise ValueError(
             "File too large. Maximum size is 5MB"
         )
 
-    with open(
-        file_path,
-        "wb",
-    ) as buffer:
+    verify_image_content(content)
 
-        buffer.write(content)
+    upload_dir = (
+        UPLOAD_DIR
+        / folder
+    )
 
+    upload_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    file_path = (
+        upload_dir
+        / filename
+    )
+
+    file_path.write_bytes(
+        content
+    )
 
     return str(file_path)
 
 
-def delete_file(
+def resolve_upload_path(
     file_url: str,
-):
-    """
-    Delete uploaded file from storage.
-    """
+) -> Path | None:
+    raw_path = Path(file_url)
 
+    if raw_path.is_absolute():
+        candidate = raw_path.resolve()
 
-    file_path = (
+        try:
+            candidate.relative_to(
+                UPLOAD_DIR.resolve()
+            )
+
+            return candidate
+        except ValueError:
+            pass
+
+    normalized = (
         file_url
+        .replace("\\", "/")
         .lstrip("/")
     )
 
+    if normalized.startswith(
+        "uploads/"
+    ):
+        normalized = normalized[
+            len("uploads/"):
+        ]
 
-    path = Path(
-        file_path
+    candidate = (
+        UPLOAD_DIR
+        / normalized
+    ).resolve()
+
+    try:
+        candidate.relative_to(
+            UPLOAD_DIR.resolve()
+        )
+    except ValueError:
+        return None
+
+    return candidate
+
+
+def delete_file(
+    file_url: str | None,
+) -> None:
+    if not file_url:
+        return
+
+    path = resolve_upload_path(
+        file_url
     )
 
-
-    if path.exists():
-
+    if (
+        path is not None
+        and path.is_file()
+    ):
         path.unlink()
