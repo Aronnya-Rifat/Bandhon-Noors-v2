@@ -3,15 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.config import settings
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
+
 from fastapi.middleware.gzip import (
     GZipMiddleware,
 )
 from starlette.middleware.trustedhost import (
     TrustedHostMiddleware,
 )
-UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+from app.services.file_service import (
+    UPLOAD_DIR,
+)
 
 is_production = (
     settings.environment.lower()
@@ -38,8 +39,22 @@ app = FastAPI(
         else "/openapi.json"
     ),
 )
+
+media_url_path = (
+    settings.media_url_path
+    .strip()
+    .rstrip("/")
+)
+
+if not media_url_path:
+    media_url_path = "/uploads"
+
+if not media_url_path.startswith("/"):
+    media_url_path = (
+        f"/{media_url_path}"
+    )
 app.mount(
-    "/uploads",
+    media_url_path,
     StaticFiles(
         directory=UPLOAD_DIR,
     ),

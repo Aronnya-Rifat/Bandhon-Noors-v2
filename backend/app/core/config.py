@@ -39,7 +39,9 @@ class Settings(BaseSettings):
     frontend_url: str = (
         "http://localhost:3000"
     )
+    upload_dir: str = "uploads"
 
+    media_url_path: str = "/uploads"
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_username: str | None = None

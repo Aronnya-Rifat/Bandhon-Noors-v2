@@ -2,6 +2,7 @@ from pathlib import Path
 import uuid
 from app.services.file_service import (
     UPLOAD_DIR,
+    build_media_url,
 )
 from PIL import Image, ImageOps
 
@@ -78,10 +79,9 @@ def create_processed_image(
     )
 
 
-    return (
-        f"/uploads/products/processed/{filename}"
+    return build_media_url(
+        f"products/processed/{filename}"
     )
-
 def create_thumbnail(
     source_path: str,
 ) -> str:
@@ -146,10 +146,9 @@ def create_thumbnail(
     )
 
 
-    return (
-        f"/uploads/products/thumbnails/{filename}"
+    return build_media_url(
+        f"products/thumbnails/{filename}"
     )
-    
     
 HOMEPAGE_PROCESSED_DIR = (
     UPLOAD_DIR
@@ -213,8 +212,8 @@ def create_homepage_image(
     )
 
 
-    return (
-        f"/uploads/homepage/processed/{filename}"
+    return build_media_url(
+        f"homepage/processed/{filename}"
     )
 
 CATEGORY_PROCESSED_DIR = (
@@ -275,6 +274,6 @@ def create_category_image(
     )
 
 
-    return (
-        f"/uploads/categories/processed/{filename}"
+    return build_media_url(
+        f"categories/processed/{filename}"
     )

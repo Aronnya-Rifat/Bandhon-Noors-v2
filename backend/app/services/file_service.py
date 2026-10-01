@@ -1,7 +1,7 @@
 import uuid
 from io import BytesIO
 from pathlib import Path
-
+from app.core.config import settings
 from fastapi import UploadFile
 from PIL import (
     Image,
@@ -15,9 +15,21 @@ BACKEND_DIR = (
     .parents[2]
 )
 
+configured_upload_dir = (
+    Path(settings.upload_dir)
+    .expanduser()
+)
+
 UPLOAD_DIR = (
-    BACKEND_DIR
-    / "uploads"
+    configured_upload_dir
+    if configured_upload_dir.is_absolute()
+    else BACKEND_DIR
+    / configured_upload_dir
+).resolve()
+
+UPLOAD_DIR.mkdir(
+    parents=True,
+    exist_ok=True,
 )
 
 ALLOWED_IMAGE_TYPES = {
@@ -42,7 +54,40 @@ ALLOWED_EXTENSIONS = {
 MAX_FILE_SIZE = (
     5 * 1024 * 1024
 )
+def build_media_url(
+    relative_path: str,
+) -> str:
+    """
+    Build the public URL saved in the database.
 
+    The physical upload location may change without
+    changing existing database media records.
+    """
+
+    url_prefix = (
+        settings.media_url_path
+        .strip()
+        .rstrip("/")
+    )
+
+    if not url_prefix:
+        url_prefix = "/uploads"
+
+    if not url_prefix.startswith("/"):
+        url_prefix = (
+            f"/{url_prefix}"
+        )
+
+    clean_path = (
+        relative_path
+        .replace("\\", "/")
+        .lstrip("/")
+    )
+
+    return (
+        f"{url_prefix}/"
+        f"{clean_path}"
+    )
 
 def generate_filename(
     original_name: str,
@@ -173,7 +218,21 @@ def resolve_upload_path(
         .lstrip("/")
     )
 
-    if normalized.startswith(
+    url_prefix = (
+        settings.media_url_path
+        .strip("/")
+    )
+
+    if (
+        url_prefix
+        and normalized.startswith(
+            f"{url_prefix}/"
+        )
+    ):
+        normalized = normalized[
+            len(url_prefix) + 1:
+        ]
+    elif normalized.startswith(
         "uploads/"
     ):
         normalized = normalized[
