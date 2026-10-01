@@ -20,7 +20,9 @@ class Settings(BaseSettings):
     cors_origins: str = (
         "http://localhost:3000"
     )
-
+    allowed_hosts: str = (
+        "localhost,127.0.0.1"
+    )
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -36,6 +38,14 @@ class Settings(BaseSettings):
             for origin in self.cors_origins.split(",")
             if origin.strip()
         ]
-
+    @property
+    def trusted_hosts(
+        self,
+    ) -> list[str]:
+        return [
+            host.strip()
+            for host in self.allowed_hosts.split(",")
+            if host.strip()
+        ]
 
 settings = Settings()
