@@ -91,9 +91,20 @@ export default function ProductListing({
 
   const router = useRouter();
   const categoriesWithSizes = new Set(["women", "men", "baby"]);
-  
-  
+  const sizePatterns: Record<string, RegExp> = {
+    women: /^(XS|S|M|L|XL|XXL|XXXL|Free Size)$/i,
 
+    men: /^(XS|S|M|L|XL|XXL|XXXL|Free Size)$/i,
+
+    baby: /^(\d+\s*(M|Y)|XS|S|M|L|XL)$/i,
+  };
+
+  const visibleSizes =
+    selectedCategory && sizePatterns[selectedCategory]
+      ? availableSizes.filter((size) =>
+          sizePatterns[selectedCategory].test(size),
+        )
+      : [];
   function navigateToProducts(
     overrides: {
       category?: string;
@@ -146,18 +157,11 @@ export default function ProductListing({
     router.push(queryString ? `/products?${queryString}` : "/products");
   }
 
-  function changeCategory(
-    value: string,
-  ) {
+  function changeCategory(value: string) {
     navigateToProducts({
       category: value,
       subcategory: "",
-      size:
-        categoriesWithSizes.has(
-          value,
-        )
-          ? selectedSize
-          : "",
+      size: categoriesWithSizes.has(value) ? selectedSize : "",
       page: 1,
     });
   }
@@ -221,7 +225,9 @@ export default function ProductListing({
           selectedColor={selectedColor}
           onSizeChange={changeSize}
           onColorChange={changeColor}
-          sizes={availableSizes}
+          sizes={
+            categoriesWithSizes.has(selectedCategory) ? availableSizes : []
+          }
           colors={availableColors}
         />
       </div>
@@ -372,7 +378,9 @@ export default function ProductListing({
               selectedColor={selectedColor}
               onSizeChange={changeSize}
               onColorChange={changeColor}
-              sizes={availableSizes}
+              sizes={
+                categoriesWithSizes.has(selectedCategory) ? availableSizes : []
+              }
               colors={availableColors}
             />
           </div>

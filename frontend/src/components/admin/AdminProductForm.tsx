@@ -128,8 +128,6 @@ export default function AdminProductForm({
       </div>
 
       <div>
-        
-
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
             Product Code
@@ -162,18 +160,29 @@ export default function AdminProductForm({
 
       <div className="md:col-span-2">
         <label
-          htmlFor="description"
+          htmlFor="size-chart"
           className="mb-2 block text-sm font-medium text-gray-700"
         >
-          Description
+          Size Chart or Measurements
+          <span className="ml-2 font-normal text-gray-400">Optional</span>
         </label>
 
         <textarea
-          id="description"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          className="h-32 w-full rounded-lg border px-4 py-3"
+          id="size-chart"
+          value={sizeChart}
+          onChange={(event) => setSizeChart(event.target.value)}
+          placeholder={`Example:
+S: Chest 36", Length 40"
+M: Chest 38", Length 41"
+L: Chest 40", Length 42"`}
+          className="h-36 w-full rounded-lg border px-4 py-3"
         />
+
+        <p className="mt-2 text-xs leading-5 text-gray-500">
+          This field only explains measurements to customers. To make S, M, or L
+          selectable, enable product variants and create a separate variant for
+          each size.
+        </p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -255,8 +264,9 @@ export default function AdminProductForm({
           </span>
 
           <span className="mt-1 block text-xs text-gray-500">
-            Enable this for products with separate colors, sizes, or stock
-            options.
+            Enable this when customers must select a size, color, or another
+            option. After saving the product, create each selectable option in
+            Product Variants.
           </span>
         </span>
       </label>
