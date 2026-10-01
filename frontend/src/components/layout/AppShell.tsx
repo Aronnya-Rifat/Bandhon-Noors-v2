@@ -1,5 +1,5 @@
 "use client";
-
+import AuthProvider from "@/components/auth/AuthProvider";
 import { usePathname } from "next/navigation";
 import ChatWidget from "@/components/chat/ChatWidget";
 import CartProvider from "@/components/cart/CartProvider";
@@ -20,11 +20,17 @@ export default function AppShell({
     pathname.startsWith("/admin/");
 
   if (isAdminPage) {
-    return children;
+    return (
+      <>
+        <AuthProvider />
+        {children}
+      </>
+    );
   }
-
   return (
     <>
+      <AuthProvider />
+      
       <Header />
 
       <CartProvider />

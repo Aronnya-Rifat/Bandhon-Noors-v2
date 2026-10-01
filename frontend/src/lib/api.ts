@@ -58,7 +58,16 @@ export async function apiRequest<T>(
 
     body: requestBody,
   });
-
+  if (
+    response.status === 401 &&
+    typeof window !== "undefined"
+  ) {
+    window.dispatchEvent(
+      new Event(
+        "bandhon-auth-unauthorized",
+      ),
+    );
+  }
   if (!response.ok) {
     const error: unknown = await response.json().catch(() => null);
 

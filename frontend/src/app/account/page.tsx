@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
+import {
+  useWishlistStore,
+} from "@/store/wishlist-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 
@@ -17,6 +19,12 @@ export default function AccountPage() {
 
   const resetCart = useCartStore((state) => state.resetCart);
 
+  const resetWishlist =
+  useWishlistStore(
+    (state) =>
+      state.resetWishlist,
+  );
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -24,8 +32,8 @@ export default function AccountPage() {
   function handleLogout() {
     clearSession();
     resetCart();
+    resetWishlist();
   }
-
   if (!mounted) {
     return (
       <main className="container py-20">

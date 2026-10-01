@@ -25,6 +25,8 @@ interface WishlistStore {
 
   clearWishlist: () => void;
 
+  resetWishlist: () => void;
+
   setItems: (
     items: WishlistItem[],
   ) => void;
@@ -57,7 +59,11 @@ create<WishlistStore>()(
       syncedCustomerId:
         customerId,
     }),
-
+resetWishlist: () =>
+  set({
+    items: [],
+    syncedCustomerId: null,
+  }),   
 addItem: (item) =>
   set((state) => {
     const alreadyExists = state.items.some(
