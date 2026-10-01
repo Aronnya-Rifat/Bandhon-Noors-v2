@@ -52,6 +52,17 @@ export default function AdminLayout({
     if (!mounted) {
       return;
     }
+    if (
+      token &&
+      isAdmin &&
+      user?.must_change_password
+    ) {
+      router.replace(
+        "/account/profile",
+      );
+
+      return;
+    }
 
     if (!token || !isAdmin) {
       router.replace(
@@ -61,6 +72,7 @@ export default function AdminLayout({
   }, [
     mounted,
     token,
+    user,
     isAdmin,
     router,
   ]);

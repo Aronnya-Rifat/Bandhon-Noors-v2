@@ -34,6 +34,8 @@ export interface User {
 
   is_active: boolean;
 
+  must_change_password: boolean;
+
 }
 
 

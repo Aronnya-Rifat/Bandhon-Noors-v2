@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   SyntheticEvent,
   useEffect,
@@ -15,6 +16,7 @@ import {
 import { useAuthStore } from "@/store/auth-store";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const token =
     useAuthStore(
       (state) => state.token,
@@ -142,14 +144,20 @@ export default function ProfilePage() {
     setMessage(null);
 
     try {
-      await changeCurrentUserPassword(
+      const updated =
+        await changeCurrentUserPassword(
+          token,
+          {
+            current_password:
+              currentPassword,
+            new_password:
+              newPassword,
+          },
+        );
+
+      setSession(
         token,
-        {
-          current_password:
-            currentPassword,
-          new_password:
-            newPassword,
-        },
+        updated,
       );
 
       setCurrentPassword("");
@@ -159,6 +167,12 @@ export default function ProfilePage() {
       setMessage(
         "Password changed successfully.",
       );
+      if (
+        updated.role === "ADMIN" ||
+        updated.role === "SUPER_ADMIN"
+      ) {
+        router.push("/admin");
+      }
     } catch (requestError) {
       setError(
         requestError instanceof ApiError

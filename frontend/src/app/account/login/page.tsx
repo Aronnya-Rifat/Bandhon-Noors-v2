@@ -77,11 +77,15 @@ export default function LoginPage() {
         authenticatedUser,
       );
 
-      router.push(
-        authenticatedUser.role === "CUSTOMER"
-          ? "/account"
-          : "/admin",
-      );
+      const destination =
+        authenticatedUser.must_change_password
+          ? "/account/profile"
+          : authenticatedUser.role === "ADMIN" ||
+              authenticatedUser.role === "SUPER_ADMIN"
+            ? "/admin"
+            : "/account";
+
+      router.push(destination);
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
