@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib/utils";
 import {
   createAdminProduct,
   getAdminProducts,
+  getAdminProductVariants,
   updateAdminProduct,
 } from "@/services/admin-service";
 import { getCategories } from "@/services/category-service";
@@ -28,7 +29,7 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
+  const [hasVariants, setHasVariants] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
 
   const [query, setQuery] = useState("");
@@ -120,14 +121,24 @@ export default function AdminProductsPage() {
     setError(null);
     setMessage(null);
     scrollToEditor();
+    setHasVariants(false);
   }
 
-  function startEditing(product: Product) {
+  async function startEditing(product: Product) {
     setEditingProduct(product);
+    setHasVariants(product.has_variants);
     setEditorKey((current) => current + 1);
     setError(null);
     setMessage(null);
     scrollToEditor();
+
+    try {
+      const variants = await getAdminProductVariants(product.id);
+
+      setHasVariants(variants.length > 0);
+    } catch {
+      setError("Unable to check this product's variants.");
+    }
   }
 
   async function saveProduct(data: AdminProductCreate | AdminProductUpdate) {
@@ -140,11 +151,11 @@ export default function AdminProductsPage() {
     setIsSaving(true);
 
     try {
-      if (editingProduct && !("product_code" in data)) {
+      if (editingProduct) {
         const updated = await updateAdminProduct(
           token,
           editingProduct.id,
-          data,
+          data as AdminProductUpdate,
         );
 
         setEditingProduct(updated);
@@ -154,15 +165,22 @@ export default function AdminProductsPage() {
         );
 
         setMessage("Product updated.");
-      } else if ("product_code" in data) {
-        const created = await createAdminProduct(token, data);
+      } else {
+        const created = await createAdminProduct(
+          token,
+          data as AdminProductCreate,
+        );
 
         setProducts((items) => [created, ...items]);
-
         setEditingProduct(created);
+        setHasVariants(created.has_variants);
         setEditorKey((current) => current + 1);
 
-        setMessage("Product created. Add variants and images below.");
+        setMessage(
+          created.has_variants
+            ? "Product created. Add its variants and images."
+            : "Product created with its initial stock. Add product images.",
+        );
       }
     } catch (requestError) {
       setError(
@@ -261,35 +279,45 @@ export default function AdminProductsPage() {
           </p>
         )}
 
-        <div className="mt-5 grid items-start gap-5 xl:grid-cols-2">
+        <div className="mt-5 grid items-stretch gap-5 xl:grid-cols-2">
           <AdminProductForm
             key={`${editorKey}-${editingProduct?.id ?? "new"}`}
             product={editingProduct ?? undefined}
             categories={categories}
             isSubmitting={isSaving}
             error={error}
+            hasVariants={hasVariants}
+            onHasVariantsChange={setHasVariants}
             onSubmit={saveProduct}
           />
 
           {editingProduct ? (
-            <div className="space-y-5">
-              <AdminMediaManager
-                key={`media-${editingProduct.id}`}
-                productId={editingProduct.id}
-              />
-
-              <AdminVariantManager
-                key={`variants-${editingProduct.id}`}
-                productId={editingProduct.id}
-              />
-            </div>
+            <AdminMediaManager
+              key={`media-${editingProduct.id}`}
+              productId={editingProduct.id}
+            />
           ) : (
-            <div className="border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-              Save the basic product details first. Media and variant controls
-              will appear here immediately afterward.
+            <div className="flex min-h-[500px] items-center justify-center border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+              <div>
+                <p className="font-medium text-gray-700">Product images</p>
+
+                <p className="mt-2 max-w-sm text-sm text-gray-500">
+                  Create the product first. The image selector will open here
+                  immediately after the product receives its ID.
+                </p>
+              </div>
             </div>
           )}
         </div>
+
+        {editingProduct && hasVariants && (
+          <div className="mt-5">
+            <AdminVariantManager
+              key={`variants-${editingProduct.id}`}
+              productId={editingProduct.id}
+            />
+          </div>
+        )}
       </div>
 
       <section className="mt-12 border-t border-gray-300 pt-8">
@@ -382,7 +410,7 @@ export default function AdminProductsPage() {
                       <div className="flex gap-3">
                         <button
                           type="button"
-                          onClick={() => startEditing(product)}
+                          onClick={() => void startEditing(product)}
                           className="text-blue-600"
                         >
                           Edit

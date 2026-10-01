@@ -70,7 +70,11 @@ class Product(Base):
         default=True,
         nullable=False,
     )
-
+    has_variants: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,

@@ -125,6 +125,23 @@ def update_variant(
         db,
         variant_id,
     )
+    if (
+        data.variant_code is not None
+        and data.variant_code != variant.variant_code
+    ):
+        existing = (
+            db.query(ProductVariant)
+            .filter(
+                ProductVariant.variant_code == data.variant_code,
+                ProductVariant.id != variant.id,
+            )
+            .first()
+        )
+
+        if existing is not None:
+            raise ValueError("Variant code already exists")
+
+        variant.variant_code = data.variant_code.strip()
 
 
     if data.color_theme is not None:

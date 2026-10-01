@@ -1,6 +1,6 @@
 "use client";
 
-import { SubmitEvent, useState } from "react";
+import { Fragment, SubmitEvent, useState } from "react";
 
 import type { AdminProductCreate, AdminProductUpdate } from "@/types/admin";
 import type { Category } from "@/types/category";
@@ -12,6 +12,8 @@ interface AdminProductFormProps {
   isSubmitting: boolean;
   error: string | null;
   onSubmit: (product: AdminProductCreate | AdminProductUpdate) => Promise<void>;
+  hasVariants: boolean;
+  onHasVariantsChange: (value: boolean) => void;
 }
 
 export default function AdminProductForm({
@@ -20,13 +22,15 @@ export default function AdminProductForm({
   isSubmitting,
   error,
   onSubmit,
+  hasVariants,
+  onHasVariantsChange,
 }: AdminProductFormProps) {
   const [categoryId, setCategoryId] = useState(
     product?.category_id.toString() ?? "",
   );
+  const [initialStock, setInitialStock] = useState("0");
 
-  const [productCode, setProductCode] = useState(product?.product_code ?? "");
-
+  const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [name, setName] = useState(product?.name ?? "");
 
   const [description, setDescription] = useState(product?.description ?? "");
@@ -50,6 +54,7 @@ export default function AdminProductForm({
       weight: weight ? Number(weight) : undefined,
       size_chart: sizeChart.trim() || undefined,
       is_featured: isFeatured,
+      has_variants: hasVariants,
     };
 
     if (product) {
@@ -59,11 +64,18 @@ export default function AdminProductForm({
 
     await onSubmit({
       ...commonData,
-      product_code: productCode.trim(),
+      initial_stock: hasVariants ? 0 : Number(initialStock),
+      low_stock_threshold: Number(lowStockThreshold),
     });
   }
 
-  const activeCategories = categories.filter((category) => category.is_active);
+  const activeCategories = categories
+    .filter((category) => category.is_active)
+    .sort((first, second) => first.id - second.id);
+
+  const mainCategories = activeCategories.filter(
+    (category) => category.parent_id === null,
+  );
 
   return (
     <form
@@ -93,40 +105,40 @@ export default function AdminProductForm({
           required
           className="w-full rounded-lg border px-4 py-3"
         >
-          <option value="">Select category</option>
-
-          {activeCategories.map((category) => {
-            const parent = categories.find(
-              (candidate) => candidate.id === category.parent_id,
+          {mainCategories.map((mainCategory) => {
+            const subcategories = activeCategories.filter(
+              (category) => category.parent_id === mainCategory.id,
             );
 
             return (
-              <option key={category.id} value={category.id}>
-                {parent ? `${parent.name} — ${category.name}` : category.name}
-              </option>
+              <Fragment key={mainCategory.id}>
+                <option value={mainCategory.id}>
+                  {mainCategory.id}. {mainCategory.name}
+                </option>
+
+                {subcategories.map((subcategory) => (
+                  <option key={subcategory.id} value={subcategory.id}>
+                    &nbsp;&nbsp;↳ {subcategory.id}. {subcategory.name}
+                  </option>
+                ))}
+              </Fragment>
             );
           })}
         </select>
       </div>
 
       <div>
-        <label
-          htmlFor="product-code"
-          className="mb-2 block text-sm font-medium text-gray-700"
-        >
-          Product Code
-        </label>
+        
 
-        <input
-          id="product-code"
-          value={productCode}
-          onChange={(event) => setProductCode(event.target.value)}
-          disabled={Boolean(product)}
-          minLength={2}
-          maxLength={50}
-          required
-          className="w-full rounded-lg border px-4 py-3 disabled:bg-gray-100"
-        />
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Product Code
+          </label>
+
+          <div className="rounded-lg border bg-gray-50 px-4 py-3 text-gray-600">
+            {product?.product_code ?? "Generated automatically after saving"}
+          </div>
+        </div>
       </div>
 
       <div>
@@ -229,7 +241,68 @@ export default function AdminProductForm({
         />
         Feature this product
       </label>
+      <label className="flex items-start gap-3 border border-gray-200 bg-gray-50 p-4 md:col-span-2">
+        <input
+          type="checkbox"
+          checked={hasVariants}
+          onChange={(event) => onHasVariantsChange(event.target.checked)}
+          className="mt-1"
+        />
 
+        <span>
+          <span className="block text-sm font-medium text-gray-800">
+            This product has variants
+          </span>
+
+          <span className="mt-1 block text-xs text-gray-500">
+            Enable this for products with separate colors, sizes, or stock
+            options.
+          </span>
+        </span>
+      </label>
+      {!hasVariants && !product && (
+        <div className="grid gap-4 border border-gray-200 bg-gray-50 p-4 md:col-span-2 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="initial-stock"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Initial Stock
+            </label>
+
+            <input
+              id="initial-stock"
+              type="number"
+              min="0"
+              step="1"
+              value={initialStock}
+              onChange={(event) => setInitialStock(event.target.value)}
+              required
+              className="w-full rounded-lg border bg-white px-4 py-3"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="low-stock-threshold"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Low-stock Warning Level
+            </label>
+
+            <input
+              id="low-stock-threshold"
+              type="number"
+              min="0"
+              step="1"
+              value={lowStockThreshold}
+              onChange={(event) => setLowStockThreshold(event.target.value)}
+              required
+              className="w-full rounded-lg border bg-white px-4 py-3"
+            />
+          </div>
+        </div>
+      )}
       {error && (
         <p role="alert" className="text-sm text-red-600 md:col-span-2">
           {error}

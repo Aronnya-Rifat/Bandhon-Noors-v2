@@ -26,6 +26,7 @@ AdminInvitationCreate,
 AdminStaffUser,
 AdminReviewPage,
 AdminStaffCreate,
+AdminVariantUpdate
 } from "@/types/admin";
 import type {
   Product,
@@ -209,7 +210,20 @@ export function createAdminProductVariant(
     },
   );
 }
-
+export function updateAdminProductVariant(
+  token: string,
+  variantId: number,
+  update: AdminVariantUpdate,
+): Promise<AdminVariant> {
+  return apiRequest<AdminVariant>(
+    `/admin/variants/${variantId}`,
+    {
+      method: "PUT",
+      token,
+      body: update,
+    },
+  );
+}
 export function getAdminProductMedia(
   productId: number,
 ): Promise<AdminProductMedia[]> {

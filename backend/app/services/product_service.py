@@ -7,9 +7,15 @@ from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
 )
+from uuid import uuid4
 from app.services.category_service import (
     get_category_with_children,
 )
+
+
+
+
+
 def _product_card_data(product: Product) -> dict:
     """Build the shared storefront product card fields."""
     category = product.category
@@ -49,57 +55,59 @@ def create_product(
     data: ProductCreate,
 ) -> Product:
     """
-    Create a new product.
+    Create a product and generate its permanent code.
+
+    Products without selectable options receive one internal
+    standard variant so cart and inventory operations remain
+    consistent.
     """
-
-    existing = (
-        db.query(Product)
-        .filter(
-            Product.product_code
-            == data.product_code
-        )
-        .first()
-    )
-
-    if existing:
-        raise ValueError(
-            "Product code already exists"
-        )
-
 
     category = (
         db.query(Category)
-        .filter(
-            Category.id == data.category_id
-        )
+        .filter(Category.id == data.category_id)
         .first()
     )
 
     if category is None:
-        raise ValueError(
-            "Category not found"
-        )
+        raise ValueError("Category not found")
 
+    temporary_code = f"TEMP-{uuid4().hex}"
 
     product = Product(
         category_id=data.category_id,
-        product_code=data.product_code,
-        name=data.name,
+        product_code=temporary_code,
+        name=data.name.strip(),
         description=data.description,
         price=data.price,
         weight=data.weight,
         size_chart=data.size_chart,
+        has_variants=data.has_variants,
         is_active=True,
         is_featured=data.is_featured,
     )
 
-
     db.add(product)
+    db.flush()
+
+    product.product_code = f"BN-P-{product.id:06d}"
+
+    if not data.has_variants:
+        standard_variant = ProductVariant(
+            product_id=product.id,
+            variant_code=f"{product.product_code}-STD",
+            color_theme=None,
+            size=None,
+            stock_quantity=data.initial_stock,
+            low_stock_threshold=data.low_stock_threshold,
+            additional_price=None,
+        )
+
+        db.add(standard_variant)
+
     db.commit()
     db.refresh(product)
 
     return product
-
 
 
 def get_products(
@@ -545,7 +553,8 @@ def update_product(
         )
     if data.is_featured is not None:
         product.is_featured = data.is_featured
-
+    if data.has_variants is not None:
+        product.has_variants = data.has_variants
     db.commit()
     db.refresh(product)
 

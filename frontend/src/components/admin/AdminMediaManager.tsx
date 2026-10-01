@@ -1,18 +1,9 @@
 "use client";
 
-import {
-  ChangeEvent,
-  useEffect,
-  useState,
-} from "react";
-import Cropper, {
-  type Area,
-} from "react-easy-crop";
+import { ChangeEvent, useEffect, useState } from "react";
+import Cropper, { type Area } from "react-easy-crop";
 
-import {
-  ApiError,
-  getApiAssetUrl,
-} from "@/lib/api";
+import { ApiError, getApiAssetUrl } from "@/lib/api";
 import { createCroppedImage } from "@/lib/crop-image";
 import {
   deleteAdminProductMedia,
@@ -20,9 +11,7 @@ import {
   uploadAdminProductImage,
 } from "@/services/admin-service";
 import { useAuthStore } from "@/store/auth-store";
-import type {
-  AdminProductMedia,
-} from "@/types/admin";
+import type { AdminProductMedia } from "@/types/admin";
 
 interface AdminMediaManagerProps {
   productId: number;
@@ -31,52 +20,35 @@ interface AdminMediaManagerProps {
 export default function AdminMediaManager({
   productId,
 }: AdminMediaManagerProps) {
-  const token =
-    useAuthStore(
-      (state) => state.token,
-    );
+  const token = useAuthStore((state) => state.token);
 
-  const [media, setMedia] =
-    useState<AdminProductMedia[]>([]);
+  const [media, setMedia] = useState<AdminProductMedia[]>([]);
 
-  const [altText, setAltText] =
-    useState("");
+  const [altText, setAltText] = useState("");
 
-  const [isPrimary, setIsPrimary] =
-    useState(false);
+  const [isPrimary, setIsPrimary] = useState(false);
 
-  const [selectedImage, setSelectedImage] =
-    useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const [selectedName, setSelectedName] =
-    useState("");
+  const [selectedName, setSelectedName] = useState("");
 
-  const [crop, setCrop] =
-    useState({
-      x: 0,
-      y: 0,
-    });
+  const [crop, setCrop] = useState({
+    x: 0,
+    y: 0,
+  });
 
-  const [zoom, setZoom] =
-    useState(1);
+  const [zoom, setZoom] = useState(1);
 
-  const [
-    croppedArea,
-    setCroppedArea,
-  ] = useState<Area | null>(null);
+  const [croppedArea, setCroppedArea] = useState<Area | null>(null);
 
-  const [isWorking, setIsWorking] =
-    useState(false);
+  const [isWorking, setIsWorking] = useState(false);
 
-  const [error, setError] =
-    useState<string | null>(null);
-
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
 
-    void getAdminProductMedia(
-      productId,
-    )
+    void getAdminProductMedia(productId)
       .then((items) => {
         if (!cancelled) {
           setMedia(items);
@@ -99,9 +71,7 @@ export default function AdminMediaManager({
 
   function closeCropper() {
     if (selectedImage) {
-      URL.revokeObjectURL(
-        selectedImage,
-      );
+      URL.revokeObjectURL(selectedImage);
     }
 
     setSelectedImage(null);
@@ -114,79 +84,56 @@ export default function AdminMediaManager({
     setZoom(1);
   }
 
-  function handleFileSelection(
-    event: ChangeEvent<HTMLInputElement>,
-  ) {
-    const file =
-      event.target.files?.[0];
+  function handleFileSelection(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
 
     event.target.value = "";
-
+    setMessage(null);
     if (!file) {
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError(
-        "The image must be 5 MB or smaller.",
-      );
+      setError("The image must be 5 MB or smaller.");
       return;
     }
 
     setError(null);
     setSelectedName(file.name);
 
-    setSelectedImage(
-      URL.createObjectURL(file),
-    );
+    setSelectedImage(URL.createObjectURL(file));
   }
 
   async function handleUpload() {
-    if (
-      !token ||
-      !selectedImage ||
-      !croppedArea
-    ) {
+    if (!token || !selectedImage || !croppedArea) {
       return;
     }
 
     setError(null);
     setIsWorking(true);
-
+    setMessage("Preparing and uploading image...");
     try {
-      const croppedFile =
-        await createCroppedImage(
-          selectedImage,
-          croppedArea,
-          selectedName,
-        );
-
-      await uploadAdminProductImage(
-        token,
-        productId,
-        croppedFile,
-        {
-          altText:
-            altText.trim() ||
-            undefined,
-          displayOrder:
-            media.length,
-          isPrimary:
-            isPrimary ||
-            media.length === 0,
-        },
+      const croppedFile = await createCroppedImage(
+        selectedImage,
+        croppedArea,
+        selectedName,
       );
 
-      const refreshed =
-        await getAdminProductMedia(
-          productId,
-        );
+      await uploadAdminProductImage(token, productId, croppedFile, {
+        altText: altText.trim() || undefined,
+        displayOrder: media.length,
+        isPrimary: isPrimary || media.length === 0,
+      });
+
+      const refreshed = await getAdminProductMedia(productId);
 
       setMedia(refreshed);
+      setMessage("Image uploaded successfully.");
       setAltText("");
       setIsPrimary(false);
       closeCropper();
     } catch (requestError) {
+      setMessage(null);
       setError(
         requestError instanceof ApiError
           ? requestError.message
@@ -199,33 +146,18 @@ export default function AdminMediaManager({
     }
   }
 
-  async function handleDelete(
-    mediaId: number,
-  ) {
-    if (
-      !token ||
-      !window.confirm(
-        "Remove this product image?",
-      )
-    ) {
+  async function handleDelete(mediaId: number) {
+    if (!token || !window.confirm("Remove this product image?")) {
       return;
     }
 
     setIsWorking(true);
     setError(null);
-
+    setMessage(null);
     try {
-      await deleteAdminProductMedia(
-        token,
-        mediaId,
-      );
+      await deleteAdminProductMedia(token, mediaId);
 
-      setMedia((items) =>
-        items.filter(
-          (item) =>
-            item.id !== mediaId,
-        ),
-      );
+      setMedia((items) => items.filter((item) => item.id !== mediaId));
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
@@ -238,36 +170,41 @@ export default function AdminMediaManager({
   }
 
   return (
-    <section className="border border-gray-200 bg-white">
+    <section className="h-full border border-gray-200 bg-white">
       <div className="border-b border-gray-200 px-5 py-4">
-        <h2 className="font-semibold text-gray-800">
-          Product Media
-        </h2>
+        <h2 className="font-semibold text-gray-800">Product Media</h2>
 
         <p className="mt-1 text-sm text-gray-500">
-          Images are cropped to 4:5 and saved
-          at 1200 × 1500.
+          Images are cropped to 4:5 and saved at 1200 × 1500.
         </p>
       </div>
 
       <div className="p-5">
         {error && (
-          <p
-            role="alert"
-            className="mb-4 text-sm text-red-600"
-          >
+          <p role="alert" className="mb-4 text-sm text-red-600">
             {error}
           </p>
         )}
+        {message && (
+          <p
+            role="status"
+            className={`mb-4 border px-4 py-3 text-sm ${
+              isWorking
+                ? "border-blue-200 bg-blue-50 text-blue-700"
+                : "border-green-200 bg-green-50 text-green-700"
+            }`}
+          >
+            {isWorking && (
+              <span className="mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-blue-300 border-t-blue-700" />
+            )}
 
+            {message}
+          </p>
+        )}
         <div className="grid gap-3 md:grid-cols-2">
           <input
             value={altText}
-            onChange={(event) =>
-              setAltText(
-                event.target.value,
-              )
-            }
+            onChange={(event) => setAltText(event.target.value)}
             placeholder="Image description"
             className="border px-3 py-2"
           />
@@ -276,20 +213,14 @@ export default function AdminMediaManager({
             <input
               type="checkbox"
               checked={isPrimary}
-              onChange={(event) =>
-                setIsPrimary(
-                  event.target.checked,
-                )
-              }
+              onChange={(event) => setIsPrimary(event.target.checked)}
             />
-
             Set as primary image
           </label>
         </div>
 
         <label className="mt-4 inline-block cursor-pointer bg-gray-800 px-5 py-2 text-sm text-white">
           Select and Crop Image
-
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -303,22 +234,13 @@ export default function AdminMediaManager({
             No product images uploaded.
           </p>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-4">
             {media.map((item) => (
-              <div
-                key={item.id}
-                className="border border-gray-200 p-2"
-              >
+              <div key={item.id} className="border border-gray-200 p-2">
                 <div className="aspect-[4/5] overflow-hidden bg-gray-100">
                   <img
-                    src={getApiAssetUrl(
-                      item.thumbnail_url ??
-                        item.file_url,
-                    )}
-                    alt={
-                      item.alt_text ??
-                      "Product image"
-                    }
+                    src={getApiAssetUrl(item.thumbnail_url ?? item.file_url)}
+                    alt={item.alt_text ?? "Product image"}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -333,11 +255,7 @@ export default function AdminMediaManager({
                   <button
                     type="button"
                     disabled={isWorking}
-                    onClick={() =>
-                      void handleDelete(
-                        item.id,
-                      )
-                    }
+                    onClick={() => void handleDelete(item.id)}
                     className="text-xs text-red-500"
                   >
                     Remove
@@ -358,8 +276,7 @@ export default function AdminMediaManager({
               </h3>
 
               <p className="mt-1 text-sm text-gray-500">
-                Move and zoom the image inside
-                the 4:5 frame.
+                Move and zoom the image inside the 4:5 frame.
               </p>
             </div>
 
@@ -371,34 +288,20 @@ export default function AdminMediaManager({
                 aspect={4 / 5}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
-                onCropComplete={(
-                  _,
-                  pixels,
-                ) =>
-                  setCroppedArea(
-                    pixels,
-                  )
-                }
+                onCropComplete={(_, pixels) => setCroppedArea(pixels)}
               />
             </div>
 
             <div className="space-y-4 p-5">
               <label className="block text-sm text-gray-700">
                 Zoom
-
                 <input
                   type="range"
                   min={1}
                   max={3}
                   step={0.05}
                   value={zoom}
-                  onChange={(event) =>
-                    setZoom(
-                      Number(
-                        event.target.value,
-                      ),
-                    )
-                  }
+                  onChange={(event) => setZoom(Number(event.target.value))}
                   className="mt-2 w-full"
                 />
               </label>
@@ -415,18 +318,11 @@ export default function AdminMediaManager({
 
                 <button
                   type="button"
-                  disabled={
-                    isWorking ||
-                    !croppedArea
-                  }
-                  onClick={() =>
-                    void handleUpload()
-                  }
+                  disabled={isWorking || !croppedArea}
+                  onClick={() => void handleUpload()}
                   className="bg-gray-800 px-5 py-2 text-sm text-white disabled:opacity-50"
                 >
-                  {isWorking
-                    ? "Uploading..."
-                    : "Crop and Upload"}
+                  {isWorking ? "Uploading..." : "Crop and Upload"}
                 </button>
               </div>
             </div>

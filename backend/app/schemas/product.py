@@ -10,11 +10,6 @@ class ProductCreate(BaseModel):
 
     category_id: int
 
-    product_code: str = Field(
-        min_length=2,
-        max_length=50,
-    )
-
     name: str = Field(
         min_length=2,
         max_length=200,
@@ -32,7 +27,17 @@ class ProductCreate(BaseModel):
     
     is_featured: bool = False
 
+    has_variants: bool = False
 
+    initial_stock: int = Field(
+        default=0,
+        ge=0,
+    )
+
+    low_stock_threshold: int = Field(
+        default=5,
+        ge=0,
+    )
 class ProductUpdate(BaseModel):
     """
     Data allowed for product updates.
@@ -56,7 +61,7 @@ class ProductUpdate(BaseModel):
     is_active: bool | None = None
 
     is_featured: bool | None = None
-
+    has_variants: bool | None = None
 class ProductResponse(BaseModel):
     """
     Product response.
@@ -67,7 +72,7 @@ class ProductResponse(BaseModel):
     category_id: int
 
     product_code: str
-
+    has_variants: bool
     name: str
 
     description: str | None
@@ -85,7 +90,7 @@ class ProductResponse(BaseModel):
     created_at: datetime
 
     updated_at: datetime
-
+    
 
     class Config:
         from_attributes = True

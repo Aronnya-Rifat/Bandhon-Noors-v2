@@ -57,7 +57,11 @@ class VariantUpdate(BaseModel):
     )
 
     additional_price: float | None = None
-
+    variant_code: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=100,
+    )
 
 
 class VariantResponse(BaseModel):

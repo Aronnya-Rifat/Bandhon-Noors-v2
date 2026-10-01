@@ -97,6 +97,8 @@ export interface Product {
 
   product_code: string;
 
+  has_variants: boolean;
+
   name: string;
 
   description: string | null;

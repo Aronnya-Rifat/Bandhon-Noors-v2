@@ -28,12 +28,14 @@ export interface AdminProductUpdate {
 
 export interface AdminProductCreate {
   category_id: number;
-  product_code: string;
   name: string;
   description?: string;
   price: number;
   weight?: number;
   size_chart?: string;
+  has_variants: boolean;
+  initial_stock: number;
+  low_stock_threshold: number;
   is_featured: boolean;
 }
 
@@ -58,7 +60,13 @@ export interface AdminVariantCreate {
   low_stock_threshold: number;
   additional_price?: number;
 }
-
+export interface AdminVariantUpdate {
+  variant_code?: string;
+  color_theme?: string;
+  size?: string;
+  low_stock_threshold?: number;
+  additional_price?: number;
+}
 export interface AdminProductMedia {
   id: number;
   product_id: number;
