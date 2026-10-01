@@ -546,3 +546,20 @@ export function createAdminStaff(
     },
   );
 }
+export function updateAdminOrderShipment(
+  token: string,
+  orderId: number,
+  data: {
+    courier_name: string;
+    tracking_number: string;
+  },
+): Promise<Order> {
+  return apiRequest<Order>(
+    `/admin/orders/${orderId}/shipment`,
+    {
+      method: "PATCH",
+      token,
+      body: data,
+    },
+  );
+}

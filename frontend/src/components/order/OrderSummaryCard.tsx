@@ -59,18 +59,17 @@ export default function OrderSummaryCard({
             {statusLabels[order.status]}
           </span>
         </div>
-        
       </div>
       {detailsHref && (
-          <div className="border-t border-pink-100 px-4 py-2">
-            <Link
-              href={detailsHref}
-              className="text-sm font-medium text-pink-600 hover:underline"
-            >
-              Open order page →
-            </Link>
-          </div>
-        )}
+        <div className="border-t border-pink-100 px-4 py-2">
+          <Link
+            href={detailsHref}
+            className="text-sm font-medium text-pink-600 hover:underline"
+          >
+            Open order page →
+          </Link>
+        </div>
+      )}
       <details open={defaultExpanded} className="border-t border-pink-100">
         <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-pink-600">
           View order details
@@ -123,6 +122,29 @@ export default function OrderSummaryCard({
               <span>{formatCurrency(order.total_amount)}</span>
             </div>
           </div>
+          {order.courier_name && order.tracking_number && (
+            <div className="mt-5 border-t border-pink-100 pt-4">
+              <h3 className="text-sm font-medium text-gray-800">Shipment</h3>
+
+              <dl className="mt-2 grid gap-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Courier</dt>
+
+                  <dd className="font-medium text-gray-800">
+                    {order.courier_name}
+                  </dd>
+                </div>
+
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Tracking number</dt>
+
+                  <dd className="break-all font-medium text-gray-800">
+                    {order.tracking_number}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          )}
           <div className="mt-5 border-t border-pink-100 pt-4">
             <h3 className="text-sm font-medium text-gray-800">Payment</h3>
 

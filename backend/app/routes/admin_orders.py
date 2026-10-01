@@ -16,7 +16,9 @@ from app.core.dependencies import require_admin
 from app.models.user import User
 
 from app.models.order import OrderStatus
-
+from app.schemas.shipment import (
+    ShipmentUpdate,
+)
 from app.schemas.order import (
     OrderResponse,
 )
@@ -25,6 +27,7 @@ from app.services.admin_order_service import (
     get_all_orders,
     get_order_by_id,
     update_order_status,
+    update_order_shipment,
 )
 
 
@@ -99,7 +102,39 @@ def order_details(
         )
 
 
+@router.patch(
+    "/{order_id}/shipment",
+    response_model=OrderResponse,
+)
+def change_shipment(
+    order_id: int,
+    data: ShipmentUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(
+        require_admin
+    ),
+):
+    try:
+        return update_order_shipment(
+            db=db,
+            order_id=order_id,
+            courier_name=(
+                data.courier_name
+            ),
+            tracking_number=(
+                data.tracking_number
+            ),
+        )
 
+    except ValueError as error:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
+        )
 @router.patch(
     "/{order_id}/status",
     response_model=OrderResponse,

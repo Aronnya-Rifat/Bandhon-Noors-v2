@@ -91,6 +91,10 @@ class OrderResponse(BaseModel):
     total_amount: float
 
     shipping_address: str
+    
+    courier_name: str | None
+
+    tracking_number: str | None
 
     items: list[OrderItemResponse]
 

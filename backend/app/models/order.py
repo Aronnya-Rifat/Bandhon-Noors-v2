@@ -85,6 +85,19 @@ class Order(Base):
         nullable=False,
     )
 
+    courier_name: Mapped[
+        str | None
+    ] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    tracking_number: Mapped[
+        str | None
+    ] = mapped_column(
+        String(150),
+        nullable=True,
+    )
 
     items = relationship(
         "OrderItem",

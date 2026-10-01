@@ -63,7 +63,8 @@ export interface Order {
   payment: Payment | null;
   created_at: string;
   updated_at: string;
-
+  courier_name: string | null;
+  tracking_number: string | null;
 
 }
 

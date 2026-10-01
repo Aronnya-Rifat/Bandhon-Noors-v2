@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useState } from "react";
+import AdminShipmentEditor from "@/components/admin/AdminShipmentEditor";
 import OrderSummaryCard from "@/components/order/OrderSummaryCard";
 import { ApiError } from "@/lib/api";
 import {
@@ -13,87 +10,46 @@ import {
 } from "@/services/admin-service";
 import { useAuthStore } from "@/store/auth-store";
 
-import type {
-  AdminOrder,
-  OrderStatus,
-} from "@/types/order";
+import type { AdminOrder, OrderStatus } from "@/types/order";
 
-
-const nextStatuses:
-  Record<
-    OrderStatus,
-    OrderStatus[]
-  > = {
-  PENDING: [
-    "CONFIRMED",
-    "CANCELLED",
-  ],
-  CONFIRMED: [
-    "PROCESSING",
-    "CANCELLED",
-  ],
-  PROCESSING: [
-    "SHIPPED",
-  ],
-  SHIPPED: [
-    "DELIVERED",
-  ],
+const nextStatuses: Record<OrderStatus, OrderStatus[]> = {
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED"],
+  SHIPPED: ["DELIVERED"],
   DELIVERED: [],
   CANCELLED: [],
 };
 
-
-const actionLabels:
-  Record<
-    OrderStatus,
-    string
-  > = {
+const actionLabels: Record<OrderStatus, string> = {
   PENDING: "Move to Pending",
   CONFIRMED: "Confirm Order",
-  PROCESSING:
-    "Start Processing",
+  PROCESSING: "Start Processing",
   SHIPPED: "Mark as Shipped",
-  DELIVERED:
-    "Mark as Delivered",
+  DELIVERED: "Mark as Delivered",
   CANCELLED: "Cancel Order",
 };
 
-
 export default function AdminOrdersPage() {
-  const token = useAuthStore(
-    (state) => state.token,
-  );
+  const token = useAuthStore((state) => state.token);
 
-  const [orders, setOrders] =
-    useState<AdminOrder[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
 
-  const [query, setQuery] =
-    useState("");
+  const [query, setQuery] = useState("");
 
-  const [statusFilter, setStatusFilter] =
-    useState<OrderStatus | "">("");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
 
-  const [page, setPage] =
-    useState(1);
+  const [page, setPage] = useState(1);
 
-  const [total, setTotal] =
-    useState(0);
+  const [total, setTotal] = useState(0);
 
-  const [totalPages, setTotalPages] =
-    useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [
-    workingOrderId,
-    setWorkingOrderId,
-  ] = useState<number | null>(
-    null,
-  );
+  const [workingOrderId, setWorkingOrderId] = useState<number | null>(null);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -108,43 +64,27 @@ export default function AdminOrdersPage() {
       setError(null);
 
       try {
-        const result =
-          await getAdminOrders(
-            accessToken,
-            {
-              page,
-              query,
-              status:
-                statusFilter,
-            },
-          );
+        const result = await getAdminOrders(accessToken, {
+          page,
+          query,
+          status: statusFilter,
+        });
 
         if (!cancelled) {
-          setOrders(
-            result.items,
-          );
+          setOrders(result.items);
 
-          setTotal(
-            result.total,
-          );
+          setTotal(result.total);
 
-          setTotalPages(
-            result.total_pages,
-          );
+          setTotalPages(result.total_pages);
 
-          if (
-            page !== result.page
-          ) {
-            setPage(
-              result.page,
-            );
+          if (page !== result.page) {
+            setPage(result.page);
           }
         }
       } catch (requestError) {
         if (!cancelled) {
           setError(
-            requestError
-              instanceof ApiError
+            requestError instanceof ApiError
               ? requestError.message
               : "Unable to load orders.",
           );
@@ -161,67 +101,44 @@ export default function AdminOrdersPage() {
     return () => {
       cancelled = true;
     };
-  }, [
-    token,
-    page,
-    query,
-    statusFilter,
-  ]);
+  }, [token, page, query, statusFilter]);
 
-  async function handleStatusChange(
-    order: AdminOrder,
-    status: OrderStatus,
-  ) {
+  async function handleStatusChange(order: AdminOrder, status: OrderStatus) {
     if (!token) {
       return;
     }
 
     if (
       status === "CANCELLED" &&
-      !window.confirm(
-        `Cancel order #${order.id}? Its stock will be returned.`,
-      )
+      !window.confirm(`Cancel order #${order.id}? Its stock will be returned.`)
     ) {
       return;
     }
 
     setError(null);
-    setWorkingOrderId(
-      order.id,
-    );
+    setWorkingOrderId(order.id);
 
     try {
-      const updated =
-        await updateAdminOrderStatus(
-          token,
-          order.id,
-          status,
-        );
+      const updated = await updateAdminOrderStatus(token, order.id, status);
 
-      setOrders(
-        (current) =>
-          current.map(
-            (item) =>
-              item.id ===
-              updated.id
-                ? {
-                    ...item,
-                    ...updated,
-                  }
-                : item,
-          ),
+      setOrders((current) =>
+        current.map((item) =>
+          item.id === updated.id
+            ? {
+                ...item,
+                ...updated,
+              }
+            : item,
+        ),
       );
     } catch (requestError) {
       setError(
-        requestError
-          instanceof ApiError
+        requestError instanceof ApiError
           ? requestError.message
           : "Unable to update the order.",
       );
     } finally {
-      setWorkingOrderId(
-        null,
-      );
+      setWorkingOrderId(null);
     }
   }
 
@@ -237,22 +154,16 @@ export default function AdminOrdersPage() {
         "
       >
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Orders
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Orders</h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            {total} orders
-          </p>
+          <p className="mt-1 text-sm text-gray-500">{total} orders</p>
         </div>
 
         <div className="flex w-full flex-wrap gap-3 md:w-auto">
           <input
             value={query}
             onChange={(event) => {
-              setQuery(
-                event.target.value,
-              );
+              setQuery(event.target.value);
               setPage(1);
             }}
             placeholder="Order ID, customer, email"
@@ -262,26 +173,15 @@ export default function AdminOrdersPage() {
           <select
             value={statusFilter}
             onChange={(event) => {
-              setStatusFilter(
-                  event.target.value as (
-                    OrderStatus | ""
-                  ),
-                );
+              setStatusFilter(event.target.value as OrderStatus | "");
               setPage(1);
             }}
             className="border bg-white px-4 py-2 text-sm"
           >
-            <option value="">
-              All statuses
-            </option>
+            <option value="">All statuses</option>
 
-            {Object.keys(
-              nextStatuses,
-            ).map((status) => (
-              <option
-                key={status}
-                value={status}
-              >
+            {Object.keys(nextStatuses).map((status) => (
+              <option key={status} value={status}>
                 {status}
               </option>
             ))}
@@ -299,9 +199,7 @@ export default function AdminOrdersPage() {
       )}
 
       {isLoading ? (
-        <p className="mt-6 text-sm text-gray-500">
-          Loading orders...
-        </p>
+        <p className="mt-6 text-sm text-gray-500">Loading orders...</p>
       ) : orders.length === 0 ? (
         <p className="mt-6 border bg-white p-6 text-sm text-gray-500">
           No orders found.
@@ -319,97 +217,79 @@ export default function AdminOrdersPage() {
               2xl:grid-cols-3
             "
           >
-            {orders.map(
-              (order) => {
-                const available =
-                  nextStatuses[
-                    order.status
-                  ];
+            {orders.map((order) => {
+              const available = nextStatuses[order.status];
 
-                return (
-                  <section
-                    key={order.id}
-                    className="min-w-0 rounded-xl border border-gray-200 bg-white p-4"
-                  >
-                    <div className="mb-3">
-                      <p className="font-medium text-gray-900">
-                        {order.customer_name}
-                      </p>
+              return (
+                <section
+                  key={order.id}
+                  className="min-w-0 rounded-xl border border-gray-200 bg-white p-4"
+                >
+                  <div className="mb-3">
+                    <p className="font-medium text-gray-900">
+                      {order.customer_name}
+                    </p>
 
-                      <p className="text-xs text-gray-500">
-                        {order.customer_email}
-                      </p>
-                    </div>
+                    <p className="text-xs text-gray-500">
+                      {order.customer_email}
+                    </p>
+                  </div>
 
-                    <OrderSummaryCard
+                  <OrderSummaryCard order={order} showAddress />
+                  {token && (
+                    <AdminShipmentEditor
+                      token={token}
                       order={order}
-                      showAddress
-                    />
-
-                    {available.length >
-                      0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {available.map(
-                          (
-                            nextStatus,
-                          ) => (
-                            <button
-                              key={
-                                nextStatus
-                              }
-                              type="button"
-                              disabled={
-                                workingOrderId ===
-                                order.id
-                              }
-                              onClick={() => {
-                                void handleStatusChange(
-                                  order,
-                                  nextStatus,
-                                );
-                              }}
-                              className={
-                                nextStatus ===
-                                "CANCELLED"
-                                  ? "border border-red-200 px-3 py-2 text-xs text-red-600 disabled:opacity-50"
-                                  : "bg-[#D88C9A] px-3 py-2 text-xs text-white disabled:opacity-50"
-                              }
-                            >
-                              {
-                                actionLabels[
-                                  nextStatus
-                                ]
-                              }
-                            </button>
+                      onUpdated={(updated) => {
+                        setOrders((current) =>
+                          current.map((item) =>
+                            item.id === updated.id
+                              ? {
+                                  ...item,
+                                  ...updated,
+                                }
+                              : item,
                           ),
-                        )}
-                      </div>
-                    )}
-                  </section>
-                );
-              },
-            )}
+                        );
+                      }}
+                    />
+                  )}
+                  {available.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {available.map((nextStatus) => (
+                        <button
+                          key={nextStatus}
+                          type="button"
+                          disabled={workingOrderId === order.id}
+                          onClick={() => {
+                            void handleStatusChange(order, nextStatus);
+                          }}
+                          className={
+                            nextStatus === "CANCELLED"
+                              ? "border border-red-200 px-3 py-2 text-xs text-red-600 disabled:opacity-50"
+                              : "bg-[#D88C9A] px-3 py-2 text-xs text-white disabled:opacity-50"
+                          }
+                        >
+                          {actionLabels[nextStatus]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
           </div>
 
           <div className="mt-6 flex items-center justify-between gap-4">
             <p className="text-sm text-gray-500">
-              Page {page} of{" "}
-              {totalPages}
+              Page {page} of {totalPages}
             </p>
 
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={page <= 1}
-                onClick={() =>
-                  setPage(
-                    (current) =>
-                      Math.max(
-                        1,
-                        current - 1,
-                      ),
-                  )
-                }
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
                 className="border bg-white px-4 py-2 text-sm disabled:opacity-40"
               >
                 Previous
@@ -417,17 +297,9 @@ export default function AdminOrdersPage() {
 
               <button
                 type="button"
-                disabled={
-                  page >= totalPages
-                }
+                disabled={page >= totalPages}
                 onClick={() =>
-                  setPage(
-                    (current) =>
-                      Math.min(
-                        totalPages,
-                        current + 1,
-                      ),
-                  )
+                  setPage((current) => Math.min(totalPages, current + 1))
                 }
                 className="border bg-white px-4 py-2 text-sm disabled:opacity-40"
               >

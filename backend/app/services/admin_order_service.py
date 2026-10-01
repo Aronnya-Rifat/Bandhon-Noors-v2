@@ -335,6 +335,17 @@ def update_order_status(
             payment.payment_status = (
                 PaymentStatus.SUCCESS
             )
+            
+    if (
+        status == OrderStatus.SHIPPED
+        and (
+            not order.courier_name
+            or not order.tracking_number
+        )
+    ):
+        raise ValueError(
+            "Add courier and tracking details before marking the order as shipped"
+        )
     order.status = status
 
 
@@ -342,3 +353,37 @@ def update_order_status(
     db.refresh(order)
 
     return order
+def update_order_shipment(
+    db: Session,
+    order_id: int,
+    courier_name: str,
+    tracking_number: str,
+) -> Order:
+    order = get_order_by_id(
+        db=db,
+        order_id=order_id,
+    )
+
+    if order.status in (
+        OrderStatus.DELIVERED,
+        OrderStatus.CANCELLED,
+    ):
+        raise ValueError(
+            "Shipment details cannot be changed for this order"
+        )
+
+    order.courier_name = (
+        courier_name.strip()
+    )
+
+    order.tracking_number = (
+        tracking_number.strip()
+    )
+
+    db.commit()
+    db.refresh(order)
+
+    return get_order_by_id(
+        db=db,
+        order_id=order.id,
+    )
