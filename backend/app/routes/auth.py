@@ -1,4 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    status,
+)
+from app.core.config import settings
+from app.core.rate_limit import (
+    enforce_rate_limit,
+)
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -36,17 +46,26 @@ router = APIRouter(
     response_model=TokenResponse,
 )
 def login(
-    request: LoginRequest,
+    data: LoginRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
 ):
     """
     Authenticate user using email or phone.
     """
-
+    enforce_rate_limit(
+        http_request,
+        scope="login",
+        limit=settings.login_rate_limit,
+        window_seconds=(
+            settings
+            .login_rate_window_seconds
+        ),
+    )
     user = authenticate_user(
         db=db,
-        login=request.login,
-        password=request.password,
+        login=data.login,
+        password=data.password,
     )
 
     if user is None:
@@ -68,7 +87,8 @@ def login(
     status_code=status.HTTP_201_CREATED,
 )
 def register(
-    request: RegisterRequest,
+    data: RegisterRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
 ):
     """
@@ -76,12 +96,23 @@ def register(
 
     Approved admin invitations create ADMIN accounts.
     Normal registrations create CUSTOMER accounts.
-    """
-
+            """
+    enforce_rate_limit(
+        http_request,
+        scope="registration",
+        limit=(
+            settings
+            .registration_rate_limit
+        ),
+        window_seconds=(
+            settings
+            .registration_rate_window_seconds
+        ),
+    )
     try:
         return register_user(
             db=db,
-            data=request,
+            data=data,
         )
 
     except ValueError as error:

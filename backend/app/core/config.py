@@ -9,7 +9,11 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     environment: str = "local"
     debug: bool = False
+    login_rate_limit: int = 10
+    login_rate_window_seconds: int = 900
 
+    registration_rate_limit: int = 5
+    registration_rate_window_seconds: int = 3600
     database_url: str
     secret_key: str
 

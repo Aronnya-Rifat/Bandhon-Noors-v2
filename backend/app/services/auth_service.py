@@ -34,11 +34,16 @@ def authenticate_user(
         User object if credentials are valid.
         None if authentication fails.
     """
+    login_value = login.strip()
 
+    if "@" in login_value:
+        login_value = (
+            login_value.lower()
+        )
     statement = select(User).where(
         or_(
-            User.email == login,
-            User.phone == login,
+            User.email == login_value,
+            User.phone == login_value,
         )
     )
 
