@@ -1,14 +1,16 @@
 from datetime import datetime, timedelta, timezone
-
+from app.core.config import settings
 from jose import jwt
 from passlib.context import CryptContext
 
 
 # Temporary development values.
 # These will later move to environment variables.
-SECRET_KEY = "change-this-in-env"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = (
+    settings.access_token_expire_minutes
+)
 
 
 password_context = CryptContext(

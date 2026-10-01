@@ -2,7 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
+from app.core.config import settings
 from alembic import context
 
 from app.models import Base
@@ -10,7 +10,13 @@ from app.models import Base
 
 # Alembic configuration object
 config = context.config
-
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.database_url.replace(
+        "%",
+        "%%",
+    ),
+)
 
 # Configure logging from alembic.ini
 if config.config_file_name is not None:

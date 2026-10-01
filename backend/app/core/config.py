@@ -1,25 +1,41 @@
-from dataclasses import dataclass
+from pydantic_settings import (
+    BaseSettings,
+    SettingsConfigDict,
+)
 
 
-@dataclass(frozen=True)
-class Settings:
-    """
-    Basic application settings.
-
-    This will later become the central location for values loaded from
-    environment variables, such as database URLs and security settings.
-    """
-
+class Settings(BaseSettings):
     app_name: str = "Bandhon Noors API"
     app_version: str = "0.1.0"
     environment: str = "local"
-    debug: bool = True
+    debug: bool = False
 
-    database_url: str = (
-        "postgresql+psycopg://"
-        "bandhonnoors:"
-        "Aronnya2001%40@localhost:5432/"
-        "bandhonnoors"
+    database_url: str
+    secret_key: str
+
+    algorithm: str = "HS256"
+
+    access_token_expire_minutes: int = 60
+
+    cors_origins: str = (
+        "http://localhost:3000"
     )
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    @property
+    def allowed_origins(
+        self,
+    ) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.cors_origins.split(",")
+            if origin.strip()
+        ]
+
 
 settings = Settings()

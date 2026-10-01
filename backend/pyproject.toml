@@ -12,6 +12,7 @@ dependencies = [
     "bcrypt==4.0.1",
     "python-jose[cryptography]",
     "pwdlib[argon2]==0.2.1",
+    "pydantic-settings>=2.10,<3",
 ]
 [tool.setuptools.packages.find]
 where = ["."]
