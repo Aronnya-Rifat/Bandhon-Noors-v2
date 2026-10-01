@@ -4,7 +4,7 @@ from fastapi import (
     HTTPException,
     Request,
     status,
-    BackgroundTask,
+    BackgroundTasks,
 )
 from app.core.config import settings
 from app.core.rate_limit import (
