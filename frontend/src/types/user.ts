@@ -99,3 +99,8 @@ export interface UserPasswordChange {
   current_password: string;
   new_password: string;
 }
+export interface UserPasswordChangeResponse {
+  user: User;
+  access_token: string;
+  token_type: string;
+}

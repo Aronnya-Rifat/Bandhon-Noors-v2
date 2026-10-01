@@ -71,6 +71,8 @@ def create_user_token(
     token_data = {
         "sub": str(user.id),
         "role": user.role.value,
+        "session_version":
+            user.session_version,
     }
     expires_minutes = (
         settings
@@ -267,6 +269,7 @@ def change_user_password(
         )
     )
     user.must_change_password = False
+    user.session_version += 1
     db.commit()
     db.refresh(user)
 

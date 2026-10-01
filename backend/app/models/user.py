@@ -1,7 +1,13 @@
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import Boolean, DateTime, Enum, String
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -71,7 +77,11 @@ class User(Base):
         default=False,
         nullable=False,
     )
-
+    session_version: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,

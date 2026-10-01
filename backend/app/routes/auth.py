@@ -23,6 +23,7 @@ from app.schemas.user import (
     UserPasswordChange,
     UserProfileUpdate,
     UserResponse,
+    UserPasswordChangeResponse,
 )
 from app.schemas.user import UserResponse
 
@@ -165,7 +166,7 @@ def update_current_user_profile(
 
 @router.post(
     "/me/password",
-    response_model=UserResponse,
+    response_model=UserPasswordChangeResponse,
 )
 def update_current_user_password(
     data: UserPasswordChange,
@@ -175,11 +176,26 @@ def update_current_user_password(
     db: Session = Depends(get_db),
 ):
     try:
-        return change_user_password(
-            db=db,
-            user=user,
-            data=data,
+        updated_user = (
+            change_user_password(
+                db=db,
+                user=user,
+                data=data,
+            )
         )
+
+        replacement_token = (
+            create_user_token(
+                updated_user
+            )
+        )
+
+        return {
+            "user": updated_user,
+            "access_token":
+                replacement_token,
+            "token_type": "bearer",
+        }
 
     except ValueError as error:
         raise HTTPException(

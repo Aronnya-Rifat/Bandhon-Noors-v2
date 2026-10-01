@@ -7,6 +7,7 @@ import type {
   User,
   UserPasswordChange,
 UserProfileUpdate,
+UserPasswordChangeResponse,
 } from "@/types/user";
 
 export function loginCustomer(
@@ -60,8 +61,8 @@ export function updateCurrentUser(
 export function changeCurrentUserPassword(
   token: string,
   update: UserPasswordChange,
-): Promise<User> {
-  return apiRequest<User>(
+): Promise<UserPasswordChangeResponse> {
+  return apiRequest<UserPasswordChangeResponse>(
     "/me/password",
     {
       method: "POST",

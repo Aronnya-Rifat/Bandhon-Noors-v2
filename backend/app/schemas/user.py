@@ -53,3 +53,11 @@ class UserPasswordChange(BaseModel):
         min_length=8,
         max_length=72,
     )
+class UserPasswordChangeResponse(
+    BaseModel,
+):
+    user: UserResponse
+
+    access_token: str
+
+    token_type: str = "bearer"

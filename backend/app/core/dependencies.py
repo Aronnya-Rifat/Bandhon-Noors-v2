@@ -36,8 +36,17 @@ def get_current_user(
         )
 
         user_id = payload.get("sub")
+        session_version = payload.get(
+            "session_version"
+        )
 
-        if user_id is None:
+        if (
+            user_id is None
+            or not isinstance(
+                session_version,
+                int,
+            )
+        ):
             raise credentials_exception
 
     except JWTError:
@@ -51,7 +60,11 @@ def get_current_user(
 
     if user is None:
         raise credentials_exception
-
+    if (
+        user.session_version
+        != session_version
+    ):
+        raise credentials_exception
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

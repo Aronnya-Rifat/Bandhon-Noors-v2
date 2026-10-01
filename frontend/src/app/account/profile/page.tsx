@@ -144,7 +144,7 @@ export default function ProfilePage() {
     setMessage(null);
 
     try {
-      const updated =
+      const result =
         await changeCurrentUserPassword(
           token,
           {
@@ -156,8 +156,8 @@ export default function ProfilePage() {
         );
 
       setSession(
-        token,
-        updated,
+        result.access_token,
+        result.user,
       );
 
       setCurrentPassword("");
@@ -168,8 +168,8 @@ export default function ProfilePage() {
         "Password changed successfully.",
       );
       if (
-        updated.role === "ADMIN" ||
-        updated.role === "SUPER_ADMIN"
+        result.user.role === "ADMIN" ||
+        result.user.role === "SUPER_ADMIN"
       ) {
         router.push("/admin");
       }
