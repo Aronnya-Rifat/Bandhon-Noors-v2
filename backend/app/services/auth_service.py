@@ -1,6 +1,6 @@
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
-
+from app.core.config import settings
 from app.core.security import (
     create_access_token,
     hash_password,
@@ -72,8 +72,18 @@ def create_user_token(
         "sub": str(user.id),
         "role": user.role.value,
     }
-
-    return create_access_token(token_data)
+    expires_minutes = (
+        settings
+        .customer_access_token_expire_minutes
+        if user.role
+        == UserRole.CUSTOMER
+        else settings
+        .admin_access_token_expire_minutes
+    )
+    return create_access_token(
+        token_data,
+        expires_minutes=expires_minutes,
+    )
 
 def register_user(
     db: Session,
@@ -81,9 +91,8 @@ def register_user(
 ) -> User:
     """
     Register a new user.
-
-    Approved admin invitations create ADMIN accounts.
-    Normal registrations create CUSTOMER accounts.
+    Public registration always creates
+    a customer account.
     """
     email = (
         str(data.email)

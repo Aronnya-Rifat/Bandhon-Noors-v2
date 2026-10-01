@@ -19,7 +19,11 @@ class Settings(BaseSettings):
 
     algorithm: str = "HS256"
 
-    access_token_expire_minutes: int = 60
+    customer_access_token_expire_minutes: int = (
+    7 * 24 * 60
+)
+
+    admin_access_token_expire_minutes: int = 60
 
     cors_origins: str = (
         "http://localhost:3000"

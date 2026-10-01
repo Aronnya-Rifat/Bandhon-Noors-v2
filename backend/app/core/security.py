@@ -4,13 +4,8 @@ from jose import jwt
 from passlib.context import CryptContext
 
 
-# Temporary development values.
-# These will later move to environment variables.
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = (
-    settings.access_token_expire_minutes
-)
 
 
 password_context = CryptContext(
@@ -56,20 +51,23 @@ def verify_password(
 
 def create_access_token(
     data: dict,
-    expires_delta: timedelta | None = None,
+    expires_minutes: int,
 ) -> str:
     """
-    Generate JWT access token.
+    Generate a JWT access token
+    with an explicit lifetime.
     """
 
     to_encode = data.copy()
 
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    expire = (
+        datetime.now(
+            timezone.utc
         )
+        + timedelta(
+            minutes=expires_minutes
+        )
+    )
 
     to_encode.update(
         {
