@@ -194,7 +194,10 @@ export default function AdminVariantManager({
   return (
     <section className="rounded-2xl border border-pink-100 bg-white p-6">
       <h2 className="text-xl font-semibold text-gray-800">Product Variants</h2>
-
+      <p className="mt-2 text-sm leading-6 text-gray-500">
+        Add one purchasable option for every available size and color. Each
+        option has its own code, stock quantity, and optional price adjustment.
+      </p>
       {error && (
         <p role="alert" className="mt-4 text-sm text-red-600">
           {error}
@@ -434,25 +437,45 @@ export default function AdminVariantManager({
           className="rounded-lg border px-4 py-3"
         />
 
-        <input
-          type="number"
-          min="0"
-          value={stock}
-          onChange={(event) => setStock(event.target.value)}
-          required
-          placeholder="Initial stock"
-          className="rounded-lg border px-4 py-3"
-        />
+        <div>
+          <label
+            htmlFor="variant-stock"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            Initial Stock
+          </label>
 
-        <input
-          type="number"
-          min="0"
-          value={threshold}
-          onChange={(event) => setThreshold(event.target.value)}
-          required
-          placeholder="Low-stock level"
-          className="rounded-lg border px-4 py-3"
-        />
+          <input
+            id="variant-stock"
+            type="number"
+            min="0"
+            step="1"
+            value={stock}
+            onChange={(event) => setStock(event.target.value)}
+            required
+            className="w-full rounded-lg border px-4 py-3"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="variant-threshold"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            Low-stock Warning
+          </label>
+
+          <input
+            id="variant-threshold"
+            type="number"
+            min="0"
+            step="1"
+            value={threshold}
+            onChange={(event) => setThreshold(event.target.value)}
+            required
+            className="w-full rounded-lg border px-4 py-3"
+          />
+        </div>
 
         <input
           type="number"
