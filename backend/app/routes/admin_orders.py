@@ -4,6 +4,7 @@ from fastapi import (
     HTTPException,
     Query,
     status,
+    BackgroundTasks,
 )
 from app.schemas.admin_order import (
     AdminOrderPage,
@@ -22,7 +23,9 @@ from app.schemas.shipment import (
 from app.schemas.order import (
     OrderResponse,
 )
-
+from app.services.email_service import (
+    send_order_status_email,
+)
 from app.services.admin_order_service import (
     get_all_orders,
     get_order_by_id,
@@ -142,6 +145,7 @@ def change_shipment(
 def change_status(
     order_id: int,
     new_status: OrderStatus,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
@@ -152,14 +156,33 @@ def change_status(
     """
 
     try:
-        return update_order_status(
+        order = update_order_status(
             db=db,
             order_id=order_id,
             status=new_status,
             admin=admin,
         )
 
+        customer = db.get(
+            User,
+            order.customer_id,
+        )
+
+        if customer is not None:
+            background_tasks.add_task(
+                send_order_status_email,
+                customer.email,
+                customer.name,
+                order.id,
+                order.status.value,
+                order.courier_name,
+                order.tracking_number,
+            )
+
+        return order
+
     except ValueError as error:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),

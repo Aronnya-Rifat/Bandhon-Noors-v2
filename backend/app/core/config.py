@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from_email: str | None = None
     smtp_use_tls: bool = True
+    order_notification_email: str | None = None
     @property
     def allowed_origins(
         self,
