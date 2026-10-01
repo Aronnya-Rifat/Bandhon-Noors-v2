@@ -31,7 +31,7 @@ function getGuestAssistantReply(message: string): string {
   }
 
   if (normalized.includes("payment") || normalized.includes("cod")) {
-    return "Cash on Delivery is currently available.";
+    return "Cash on Delivery is currently available. Secure bKash, Nagad, bank, and card payments will be enabled after payment gateway verification.";
   }
 
   if (normalized.includes("return") || normalized.includes("exchange")) {

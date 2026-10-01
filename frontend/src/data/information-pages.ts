@@ -86,7 +86,7 @@ export const informationPages: Record<
       {
         heading: "Which payment method is available?",
         paragraphs: [
-          "Cash on Delivery is currently available. Additional verified payment options may be added later.",
+          "Cash on Delivery is currently available. Secure bKash, Nagad, bank, and card payments will be enabled after payment gateway verification.",
         ],
       },
       {
