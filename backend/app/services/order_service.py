@@ -225,13 +225,40 @@ def create_order(
 def get_customer_orders(
     db: Session,
     customer: User,
-) -> list[Order]:
+    page: int = 1,
+    page_size: int = 20,
+) -> dict:
     """
-    Get all orders of a customer.
+    Return one page of the customer's orders.
     """
 
-    return (
+    orders_query = (
         db.query(Order)
+        .filter(
+            Order.customer_id
+            == customer.id
+        )
+    )
+
+    total = orders_query.count()
+
+    total_pages = max(
+        1,
+        (
+            total
+            + page_size
+            - 1
+        )
+        // page_size,
+    )
+
+    safe_page = min(
+        page,
+        total_pages,
+    )
+
+    orders = (
+        orders_query
         .options(
             selectinload(
                 Order.items
@@ -240,14 +267,27 @@ def get_customer_orders(
                 Order.payment
             ),
         )
-        .filter(
-            Order.customer_id == customer.id
-        )
         .order_by(
-            Order.created_at.desc()
+            Order.created_at.desc(),
+            Order.id.desc(),
         )
+        .offset(
+            (
+                safe_page - 1
+            )
+            * page_size
+        )
+        .limit(page_size)
         .all()
     )
+
+    return {
+        "items": orders,
+        "total": total,
+        "page": safe_page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 

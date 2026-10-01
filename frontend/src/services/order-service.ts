@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api";
 
 import type {
+  CustomerOrderPage,
   Order,
   OrderCreate,
 } from "@/types/order";
@@ -21,9 +22,16 @@ export function createCustomerOrder(
 
 export function getCustomerOrders(
   token: string,
-): Promise<Order[]> {
-  return apiRequest<Order[]>(
-    "/orders",
+  page = 1,
+): Promise<CustomerOrderPage> {
+  const searchParams =
+    new URLSearchParams({
+      page: String(page),
+      page_size: "20",
+    });
+
+  return apiRequest<CustomerOrderPage>(
+    `/orders?${searchParams.toString()}`,
     {
       token,
     },

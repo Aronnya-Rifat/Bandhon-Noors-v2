@@ -1,11 +1,11 @@
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     HTTPException,
+    Query,
     status,
-    BackgroundTasks,
 )
-
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -14,6 +14,7 @@ from app.core.dependencies import get_current_user
 from app.models.user import User, UserRole
 
 from app.schemas.order import (
+    CustomerOrderPage,
     OrderCreate,
     OrderResponse,
 )
@@ -117,14 +118,25 @@ def place_order(
 
 @router.get(
     "",
-    response_model=list[OrderResponse],
+    response_model=CustomerOrderPage,
 )
 def list_orders(
-    user: User = Depends(get_current_user),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=20,
+        ge=1,
+        le=50,
+    ),
+    user: User = Depends(
+        get_current_user
+    ),
     db: Session = Depends(get_db),
 ):
     """
-    View customer's orders.
+    View one page of the customer's orders.
     """
 
     require_customer(user)
@@ -132,6 +144,8 @@ def list_orders(
     return get_customer_orders(
         db=db,
         customer=user,
+        page=page,
+        page_size=page_size,
     )
 
 @router.patch(

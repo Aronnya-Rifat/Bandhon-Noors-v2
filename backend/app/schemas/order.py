@@ -106,3 +106,17 @@ class OrderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class CustomerOrderPage(BaseModel):
+    """
+    Paginated customer order response.
+    """
+
+    items: list[OrderResponse]
+
+    total: int
+
+    page: int
+
+    page_size: int
+
+    total_pages: int

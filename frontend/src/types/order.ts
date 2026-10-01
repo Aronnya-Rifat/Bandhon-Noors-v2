@@ -67,7 +67,13 @@ export interface Order {
   tracking_number: string | null;
 
 }
-
+export interface CustomerOrderPage {
+  items: Order[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
 
 export interface Payment {
   id: number;
