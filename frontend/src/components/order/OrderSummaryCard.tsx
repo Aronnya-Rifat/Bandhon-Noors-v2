@@ -35,6 +35,15 @@ export default function OrderSummaryCard({
   defaultExpanded = false,
   detailsHref,
 }: OrderSummaryCardProps) {
+    const calculatedSubtotal = order.items.reduce(
+    (total, item) => total + item.unit_price * item.quantity,
+    0,
+  );
+
+  const displayedSubtotal =
+    order.subtotal > 0
+      ? order.subtotal
+      : calculatedSubtotal;
   return (
     <article className="rounded-xl border border-pink-100 bg-white">
       <div className="flex items-center justify-between gap-3 p-4">
@@ -107,7 +116,7 @@ export default function OrderSummaryCard({
             <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
 
-              <span>{formatCurrency(order.subtotal)}</span>
+              <span>{formatCurrency(displayedSubtotal)}</span>
             </div>
 
             <div className="flex justify-between text-gray-600">
