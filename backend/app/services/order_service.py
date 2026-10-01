@@ -22,7 +22,7 @@ from app.models.payment import (
 from app.models.user import User
 from app.models.address import CustomerAddress
 from app.schemas.order import OrderCreate
-
+from app.core.config import settings
 
 
 def create_order(
@@ -33,7 +33,56 @@ def create_order(
     """
     Create order from customer cart.
     """
-    
+    manual_methods = {
+        PaymentMethod.BKASH,
+        PaymentMethod.NAGAD,
+    }
+
+    if data.payment_method in {
+        PaymentMethod.BANK,
+        PaymentMethod.CARD,
+    }:
+        raise ValueError(
+            "This payment method is not "
+            "available yet"
+        )
+
+    if (
+        data.payment_method
+        == PaymentMethod.BKASH
+        and not settings.bkash_payment_number
+    ):
+        raise ValueError(
+            "bKash payment is not configured"
+        )
+
+    if (
+        data.payment_method
+        == PaymentMethod.NAGAD
+        and not settings.nagad_payment_number
+    ):
+        raise ValueError(
+            "Nagad payment is not configured"
+        )
+
+    if (
+        data.payment_method
+        in manual_methods
+    ):
+        duplicate_payment = (
+            db.query(Payment)
+            .filter(
+                Payment.transaction_id
+                == data.transaction_id
+            )
+            .first()
+        )
+
+        if duplicate_payment is not None:
+            raise ValueError(
+                "This transaction ID has "
+                "already been submitted"
+            )
     customer_cart_items = (
         db.query(CartItem)
         .join(
@@ -192,11 +241,12 @@ def create_order(
         db.delete(item)
 
 
+    order.subtotal = subtotal
+
     order.total_amount = (
         subtotal +
         delivery_charge
     )
-
     payment = Payment(
         order_id=order.id,
         amount=order.total_amount,
@@ -205,6 +255,18 @@ def create_order(
         ),
         payment_status=(
             PaymentStatus.PENDING
+        ),
+        sender_number=(
+            data.sender_number
+            if data.payment_method
+            in manual_methods
+            else None
+        ),
+        transaction_id=(
+            data.transaction_id
+            if data.payment_method
+            in manual_methods
+            else None
         ),
     )
 

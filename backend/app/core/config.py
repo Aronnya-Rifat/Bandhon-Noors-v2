@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     smtp_from_email: str | None = None
     smtp_use_tls: bool = True
     order_notification_email: str | None = None
+    bkash_payment_number: str | None = None
+    nagad_payment_number: str | None = None
     @property
     def allowed_origins(
         self,

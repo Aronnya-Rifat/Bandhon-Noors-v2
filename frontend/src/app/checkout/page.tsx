@@ -14,7 +14,12 @@ import { createCustomerOrder } from "@/services/order-service";
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import type { CustomerAddress } from "@/types/address";
-import type { DeliveryArea } from "@/types/order";
+import type {
+  DeliveryArea,
+  PaymentMethod,
+  PaymentOptions,
+} from "@/types/order";
+import { getPaymentOptions } from "@/services/payment-service";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -52,7 +57,16 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOptions | null>(
+    null,
+  );
 
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod>("COD");
+
+  const [senderNumber, setSenderNumber] = useState("");
+
+  const [transactionId, setTransactionId] = useState("");
   useEffect(() => {
     if (!token) {
       setIsLoading(false);
@@ -105,6 +119,34 @@ export default function CheckoutPage() {
   }, [token]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadPaymentOptions() {
+      try {
+        const options = await getPaymentOptions();
+
+        if (!cancelled) {
+          setPaymentOptions(options);
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError instanceof ApiError
+              ? requestError.message
+              : "Unable to load payment methods.",
+          );
+        }
+      }
+    }
+
+    void loadPaymentOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (user) {
       setFullName(user.name);
       setPhone(user.phone ?? "");
@@ -117,7 +159,15 @@ export default function CheckoutPage() {
   );
 
   const deliveryCharge = deliveryArea === "DHAKA" ? 80 : 150;
+  const isManualPayment =
+    selectedPaymentMethod === "BKASH" || selectedPaymentMethod === "NAGAD";
 
+  const selectedManualOption =
+    selectedPaymentMethod === "BKASH"
+      ? paymentOptions?.bkash
+      : selectedPaymentMethod === "NAGAD"
+        ? paymentOptions?.nagad
+        : null;
   async function handlePlaceOrder(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -130,7 +180,11 @@ export default function CheckoutPage() {
       setError("Your cart is empty.");
       return;
     }
+    if (isManualPayment && (!senderNumber.trim() || !transactionId.trim())) {
+      setError("Enter the sender number and transaction ID.");
 
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
 
@@ -164,7 +218,13 @@ export default function CheckoutPage() {
       const order = await createCustomerOrder(token, {
         address_id: addressId,
         delivery_area: deliveryArea,
-        payment_method: "COD",
+        payment_method: selectedPaymentMethod,
+        ...(isManualPayment
+          ? {
+              sender_number: senderNumber.trim(),
+              transaction_id: transactionId.trim(),
+            }
+          : {}),
       });
 
       clearCart();
@@ -386,67 +446,147 @@ export default function CheckoutPage() {
             </h2>
 
             <div className="mt-5 space-y-3">
-              <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-pink-200 bg-pink-50 p-4">
-                <span className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment-method"
-                    value="COD"
-                    checked
-                    readOnly
-                  />
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-pink-100 p-4">
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="COD"
+                  checked={selectedPaymentMethod === "COD"}
+                  onChange={() => {
+                    setSelectedPaymentMethod("COD");
+                    setError(null);
+                  }}
+                />
 
-                  <span className="font-medium text-gray-800">
-                    Cash on Delivery
-                  </span>
-                </span>
-
-                <span className="text-xs font-medium text-green-700">
-                  Available
+                <span className="font-medium text-gray-800">
+                  Cash on Delivery
                 </span>
               </label>
 
-              {[
-                {
-                  name: "bKash",
-                  description: "Pay securely through bKash",
-                },
-                {
-                  name: "Nagad",
-                  description: "Pay securely through Nagad",
-                },
-                {
-                  name: "Bank",
-                  description: "Internet banking payment",
-                },
-                {
-                  name: "Credit/Debit Card",
-                  description: "Visa, Mastercard and supported cards",
-                },
-              ].map((method) => (
-                <div
-                  key={method.name}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 opacity-70"
-                >
-                  <div>
-                    <p className="font-medium text-gray-700">{method.name}</p>
+              <label
+                className={`flex items-center gap-3 rounded-xl border p-4 ${
+                  paymentOptions?.bkash.enabled
+                    ? "cursor-pointer border-pink-100"
+                    : "cursor-not-allowed border-gray-200 bg-gray-50 opacity-60"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="BKASH"
+                  disabled={!paymentOptions?.bkash.enabled}
+                  checked={selectedPaymentMethod === "BKASH"}
+                  onChange={() => {
+                    setSelectedPaymentMethod("BKASH");
+                    setError(null);
+                  }}
+                />
 
-                    <p className="mt-1 text-xs text-gray-500">
-                      {method.description}
-                    </p>
+                <span>
+                  <span className="block font-medium text-gray-800">
+                    bKash Send Money
+                  </span>
+
+                  {!paymentOptions?.bkash.enabled && (
+                    <span className="mt-1 block text-xs text-gray-500">
+                      Currently unavailable
+                    </span>
+                  )}
+                </span>
+              </label>
+
+              <label
+                className={`flex items-center gap-3 rounded-xl border p-4 ${
+                  paymentOptions?.nagad.enabled
+                    ? "cursor-pointer border-pink-100"
+                    : "cursor-not-allowed border-gray-200 bg-gray-50 opacity-60"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="NAGAD"
+                  disabled={!paymentOptions?.nagad.enabled}
+                  checked={selectedPaymentMethod === "NAGAD"}
+                  onChange={() => {
+                    setSelectedPaymentMethod("NAGAD");
+                    setError(null);
+                  }}
+                />
+
+                <span>
+                  <span className="block font-medium text-gray-800">
+                    Nagad Send Money
+                  </span>
+
+                  {!paymentOptions?.nagad.enabled && (
+                    <span className="mt-1 block text-xs text-gray-500">
+                      Currently unavailable
+                    </span>
+                  )}
+                </span>
+              </label>
+
+              {isManualPayment && selectedManualOption && (
+                <div className="rounded-xl border border-pink-200 bg-pink-50 p-5">
+                  <p className="text-sm text-gray-700">
+                    Send exactly{" "}
+                    <strong>{formatCurrency(subtotal + deliveryCharge)}</strong>{" "}
+                    to:
+                  </p>
+
+                  <p className="mt-2 text-xl font-semibold tracking-wide text-pink-700">
+                    {selectedManualOption.number}
+                  </p>
+
+                  <p className="mt-2 text-xs leading-5 text-gray-600">
+                    {selectedManualOption.instructions}
+                  </p>
+
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <label className="text-sm text-gray-700">
+                      Sender number
+                      <input
+                        type="tel"
+                        value={senderNumber}
+                        onChange={(event) =>
+                          setSenderNumber(event.target.value)
+                        }
+                        required={isManualPayment}
+                        placeholder="01XXXXXXXXX"
+                        className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-pink-300"
+                      />
+                    </label>
+
+                    <label className="text-sm text-gray-700">
+                      Transaction ID
+                      <input
+                        value={transactionId}
+                        onChange={(event) =>
+                          setTransactionId(event.target.value)
+                        }
+                        required={isManualPayment}
+                        placeholder="Transaction ID"
+                        className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 uppercase outline-none focus:border-pink-300"
+                      />
+                    </label>
                   </div>
 
-                  <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
-                    Coming soon
-                  </span>
+                  <p className="mt-4 text-xs leading-5 text-amber-700">
+                    Your order will remain pending until an administrator
+                    verifies the payment.
+                  </p>
                 </div>
-              ))}
-            </div>
+              )}
 
-            <p className="mt-4 text-xs leading-5 text-gray-500">
-              Online payment options will be enabled after secure payment
-              gateway verification.
-            </p>
+              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-4 opacity-60">
+                <span className="font-medium text-gray-700">Bank and Card</span>
+
+                <span className="text-xs font-medium text-amber-700">
+                  Coming with SSLCOMMERZ
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 

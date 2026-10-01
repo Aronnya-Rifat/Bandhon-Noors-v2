@@ -4,7 +4,7 @@ from fastapi import (
     HTTPException,
     status,
 )
-
+from app.core.config import settings
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -14,9 +14,9 @@ from app.models.user import User, UserRole
 
 from app.schemas.payment import (
     PaymentCreate,
+    PaymentOptionsResponse,
     PaymentResponse,
 )
-
 from app.services.payment_service import (
     create_payment,
     get_order_payment,
@@ -78,7 +78,61 @@ def make_payment(
             detail=str(error),
         )
 
+@router.get(
+    "/options",
+    response_model=PaymentOptionsResponse,
+)
+def payment_options():
+    """
+    Return currently configured checkout
+    payment methods.
 
+    Payment numbers are intentionally
+    public because customers must see them
+    to complete manual payment.
+    """
+
+    bkash_number = (
+        settings.bkash_payment_number
+    )
+
+    nagad_number = (
+        settings.nagad_payment_number
+    )
+
+    sslcommerz_enabled = bool(
+        settings.sslcommerz_store_id
+        and settings.sslcommerz_store_password
+    )
+
+    return {
+        "cod_enabled": True,
+        "bkash": {
+            "enabled": bool(
+                bkash_number
+            ),
+            "number": bkash_number,
+            "instructions": (
+                "Use Send Money and enter "
+                "the exact order total. "
+                "Keep the transaction ID."
+            ),
+        },
+        "nagad": {
+            "enabled": bool(
+                nagad_number
+            ),
+            "number": nagad_number,
+            "instructions": (
+                "Use Send Money and enter "
+                "the exact order total. "
+                "Keep the transaction ID."
+            ),
+        },
+        "sslcommerz_enabled": (
+            sslcommerz_enabled
+        ),
+    }
 
 @router.get(
     "/{order_id}",

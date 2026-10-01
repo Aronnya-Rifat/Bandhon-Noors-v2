@@ -1,4 +1,7 @@
 from datetime import datetime
+from enum import Enum
+
+from pydantic import BaseModel, Field
 
 from pydantic import BaseModel
 
@@ -7,7 +10,22 @@ from app.models.payment import (
     PaymentStatus,
 )
 
+class ManualPaymentOption(BaseModel):
+    enabled: bool
 
+    number: str | None
+
+    instructions: str
+
+
+class PaymentOptionsResponse(BaseModel):
+    cod_enabled: bool
+
+    bkash: ManualPaymentOption
+
+    nagad: ManualPaymentOption
+
+    sslcommerz_enabled: bool
 
 class PaymentCreate(BaseModel):
     """
@@ -18,7 +36,23 @@ class PaymentCreate(BaseModel):
 
     payment_method: PaymentMethod
 
+class PaymentVerificationDecision(
+    str,
+    Enum,
+):
+    APPROVE = "APPROVE"
+    REJECT = "REJECT"
 
+
+class PaymentVerificationUpdate(
+    BaseModel,
+):
+    decision: PaymentVerificationDecision
+
+    note: str | None = Field(
+        default=None,
+        max_length=500,
+    )
 
 class PaymentResponse(BaseModel):
     """
@@ -36,7 +70,13 @@ class PaymentResponse(BaseModel):
     payment_status: PaymentStatus
 
     transaction_id: str | None
+    sender_number: str | None
 
+    verified_by_id: int | None
+
+    verified_at: datetime | None
+
+    verification_note: str | None
     created_at: datetime
 
 

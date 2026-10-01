@@ -54,7 +54,15 @@ def create_payment(
 
     if existing_payment:
         raise ValueError(
-            "Order already paid"
+            "A payment record already exists for this order"
+        )
+
+    if (
+        order.status
+        == OrderStatus.CANCELLED
+    ):
+        raise ValueError(
+            "Cannot create payment for a cancelled order"
         )
 
 

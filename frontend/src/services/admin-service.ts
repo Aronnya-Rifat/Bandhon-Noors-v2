@@ -111,6 +111,24 @@ export function updateAdminOrderStatus(
     },
   );
 }
+
+export function verifyAdminManualPayment(
+  token: string,
+  orderId: number,
+  data: {
+    decision: "APPROVE" | "REJECT";
+    note?: string;
+  },
+): Promise<Order> {
+  return apiRequest<Order>(
+    `/admin/orders/${orderId}/payment`,
+    {
+      method: "PATCH",
+      token,
+      body: data,
+    },
+  );
+}
 export function getAdminProducts(
   token: string,
   options: {

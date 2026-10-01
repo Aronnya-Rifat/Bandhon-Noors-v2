@@ -42,8 +42,9 @@ export interface OrderCreate {
   address_id: number;
   delivery_area: DeliveryArea;
   payment_method: PaymentMethod;
+  sender_number?: string;
+  transaction_id?: string;
 }
-
 export interface OrderItem {
   id: number;
   variant_id: number;
@@ -85,6 +86,10 @@ export interface Payment {
   payment_method: PaymentMethod;
   payment_status: PaymentStatus;
   transaction_id: string | null;
+  sender_number: string | null;
+  verified_by_id: number | null;
+  verified_at: string | null;
+  verification_note: string | null;
   created_at: string;
 }
 export interface AdminOrder
@@ -99,4 +104,16 @@ export interface AdminOrderPage {
   page: number;
   page_size: number;
   total_pages: number;
+}
+export interface ManualPaymentOption {
+  enabled: boolean;
+  number: string | null;
+  instructions: string;
+}
+
+export interface PaymentOptions {
+  cod_enabled: boolean;
+  bkash: ManualPaymentOption;
+  nagad: ManualPaymentOption;
+  sslcommerz_enabled: boolean;
 }

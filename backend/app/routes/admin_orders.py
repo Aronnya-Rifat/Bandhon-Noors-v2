@@ -10,7 +10,9 @@ from app.schemas.admin_order import (
     AdminOrderPage,
 )
 from sqlalchemy.orm import Session
-
+from app.schemas.payment import (
+    PaymentVerificationUpdate,
+)
 from app.core.database import get_db
 from app.core.dependencies import require_admin
 
@@ -31,6 +33,7 @@ from app.services.admin_order_service import (
     get_order_by_id,
     update_order_status,
     update_order_shipment,
+    verify_manual_payment,
 )
 
 
@@ -77,7 +80,36 @@ def list_orders(
         order_status=order_status,
     )
 
+@router.patch(
+    "/{order_id}/payment",
+    response_model=OrderResponse,
+)
+def review_manual_payment(
+    order_id: int,
+    data: PaymentVerificationUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(
+        require_admin
+    ),
+):
+    try:
+        return verify_manual_payment(
+            db=db,
+            order_id=order_id,
+            decision=data.decision,
+            admin=admin,
+            note=data.note,
+        )
 
+    except ValueError as error:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
+        )
 
 @router.get(
     "/{order_id}",

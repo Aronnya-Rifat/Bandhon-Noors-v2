@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Integer,
     Numeric,
     String,
 )
@@ -31,7 +32,7 @@ class PaymentMethod(str, PyEnum):
 
     # Retained for existing database records.
     MOBILE_BANKING = "MOBILE_BANKING"
-
+    
 
 
 class PaymentStatus(str, PyEnum):
@@ -80,7 +81,12 @@ class Payment(Base):
         Enum(PaymentMethod),
         nullable=False,
     )
-
+    sender_number: Mapped[
+        str | None
+    ] = mapped_column(
+        String(20),
+        nullable=True,
+    )
 
     payment_status: Mapped[PaymentStatus] = mapped_column(
         Enum(PaymentStatus),
@@ -89,8 +95,37 @@ class Payment(Base):
     )
 
 
-    transaction_id: Mapped[str | None] = mapped_column(
+    transaction_id: Mapped[
+        str | None
+    ] = mapped_column(
         String(255),
+        unique=True,
+        index=True,
+        nullable=True,
+    )
+
+
+    verified_by_id: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+
+
+    verified_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+
+    verification_note: Mapped[
+        str | None
+    ] = mapped_column(
+        String(500),
         nullable=True,
     )
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import (
     selectinload,
 )
 from math import ceil
-
+from datetime import UTC, datetime
 from sqlalchemy import or_
 from app.models.order import (
     Order,
@@ -20,6 +20,9 @@ from app.models.payment import (
 )
 from app.models.product_variant import ProductVariant
 from app.models.user import User
+from app.schemas.payment import (
+    PaymentVerificationDecision,
+)
 
 
 def get_all_orders(
@@ -384,6 +387,138 @@ def update_order_shipment(
 
     db.commit()
     db.refresh(order)
+
+    return get_order_by_id(
+        db=db,
+        order_id=order.id,
+    )
+def verify_manual_payment(
+    db: Session,
+    order_id: int,
+    decision: PaymentVerificationDecision,
+    admin: User,
+    note: str | None = None,
+) -> Order:
+    order = get_order_by_id(
+        db=db,
+        order_id=order_id,
+    )
+
+    payment = (
+        db.query(Payment)
+        .filter(
+            Payment.order_id == order.id
+        )
+        .with_for_update()
+        .first()
+    )
+
+    if payment is None:
+        raise ValueError(
+            "This order has no payment record"
+        )
+
+    if payment.payment_method not in (
+        PaymentMethod.BKASH,
+        PaymentMethod.NAGAD,
+    ):
+        raise ValueError(
+            "Only manual bKash and Nagad payments "
+            "can be verified here"
+        )
+
+    if payment.payment_status != PaymentStatus.PENDING:
+        raise ValueError(
+            "This payment has already been reviewed"
+        )
+
+    clean_note = (
+        note.strip()
+        if note
+        else None
+    )
+
+    verified_at = (
+        datetime.now(UTC)
+        .replace(tzinfo=None)
+    )
+
+    if (
+        decision
+        == PaymentVerificationDecision.APPROVE
+    ):
+        if order.status == OrderStatus.PENDING:
+            order.status = (
+                OrderStatus.CONFIRMED
+            )
+        elif order.status != OrderStatus.CONFIRMED:
+            raise ValueError(
+                "Payment cannot be approved "
+                f"while the order is {order.status.value}"
+            )
+
+        payment.payment_status = (
+            PaymentStatus.SUCCESS
+        )
+
+    else:
+        if order.status not in (
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+        ):
+            raise ValueError(
+                "Payment cannot be rejected "
+                f"while the order is {order.status.value}"
+            )
+
+        for item in order.items:
+            variant = (
+                db.query(ProductVariant)
+                .filter(
+                    ProductVariant.id
+                    == item.variant_id
+                )
+                .with_for_update()
+                .first()
+            )
+
+            if variant is None:
+                raise ValueError(
+                    f"Variant {item.variant_id} not found"
+                )
+
+            variant.stock_quantity += (
+                item.quantity
+            )
+
+            db.add(
+                InventoryTransaction(
+                    variant_id=variant.id,
+                    change_amount=item.quantity,
+                    transaction_type=(
+                        InventoryTransactionType.RETURN
+                    ),
+                    note=(
+                        "Stock returned after rejecting "
+                        f"payment for order #{order.id}"
+                    ),
+                    created_by=admin.id,
+                )
+            )
+
+        payment.payment_status = (
+            PaymentStatus.FAILED
+        )
+
+        order.status = (
+            OrderStatus.CANCELLED
+        )
+
+    payment.verified_by_id = admin.id
+    payment.verified_at = verified_at
+    payment.verification_note = clean_note
+
+    db.commit()
 
     return get_order_by_id(
         db=db,

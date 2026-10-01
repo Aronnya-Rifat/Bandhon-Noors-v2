@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdminShipmentEditor from "@/components/admin/AdminShipmentEditor";
+import AdminPaymentVerifier from "@/components/admin/AdminPaymentVerifier";
 import OrderSummaryCard from "@/components/order/OrderSummaryCard";
 import { ApiError } from "@/lib/api";
 import {
@@ -234,7 +235,26 @@ export default function AdminOrdersPage() {
                       {order.customer_email}
                     </p>
                   </div>
+                  <OrderSummaryCard order={order} showAddress />
 
+                  {token && (
+                    <AdminPaymentVerifier
+                      token={token}
+                      order={order}
+                      onUpdated={(updated) => {
+                        setOrders((current) =>
+                          current.map((item) =>
+                            item.id === updated.id
+                              ? {
+                                  ...item,
+                                  ...updated,
+                                }
+                              : item,
+                          ),
+                        );
+                      }}
+                    />
+                  )}
                   <div className="mt-3">
                     <Link
                       href={`/admin/orders/${order.id}/print`}
