@@ -8,6 +8,9 @@ import type {
   UserPasswordChange,
 UserProfileUpdate,
 UserPasswordChangeResponse,
+PasswordResetRequest,
+PasswordResetConfirm,
+AuthenticationMessage
 } from "@/types/user";
 
 export function loginCustomer(
@@ -68,6 +71,30 @@ export function changeCurrentUserPassword(
       method: "POST",
       token,
       body: update,
+    },
+  );
+}
+export function requestPasswordReset(
+  data: PasswordResetRequest,
+): Promise<AuthenticationMessage> {
+  return apiRequest<AuthenticationMessage>(
+    "/password-reset/request",
+    {
+      method: "POST",
+      body: data,
+    },
+  );
+}
+
+
+export function confirmPasswordReset(
+  data: PasswordResetConfirm,
+): Promise<AuthenticationMessage> {
+  return apiRequest<AuthenticationMessage>(
+    "/password-reset/confirm",
+    {
+      method: "POST",
+      body: data,
     },
   );
 }

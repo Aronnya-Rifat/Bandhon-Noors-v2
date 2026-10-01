@@ -4,6 +4,7 @@ from fastapi import (
     HTTPException,
     Request,
     status,
+    BackgroundTask,
 )
 from app.core.config import settings
 from app.core.rate_limit import (
@@ -18,6 +19,16 @@ from app.schemas.auth import (
     LoginRequest,
     TokenResponse,
     RegisterRequest,
+    AuthenticationMessage,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+)
+from app.services.email_service import (
+    send_password_reset_email,
+)
+from app.services.password_reset_service import (
+    create_password_reset_token,
+    reset_user_password,
 )
 from app.schemas.user import (
     UserPasswordChange,
@@ -120,8 +131,88 @@ def register(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),
+        )      
+@router.post(
+    "/password-reset/request",
+    response_model=AuthenticationMessage,
+)
+def request_password_reset(
+    data: PasswordResetRequest,
+    background_tasks: BackgroundTasks,
+    http_request: Request,
+    db: Session = Depends(get_db),
+):
+    enforce_rate_limit(
+        http_request,
+        scope="password-reset",
+        limit=5,
+        window_seconds=3600,
+    )
+
+    result = (
+        create_password_reset_token(
+            db=db,
+            email=str(data.email),
         )
-        
+    )
+
+    if result is not None:
+        user, token = result
+
+        background_tasks.add_task(
+            send_password_reset_email,
+            user.email,
+            user.name,
+            token,
+        )
+
+    return {
+        "message": (
+            "If that email is registered, "
+            "a password reset link has been sent."
+        ),
+    }
+
+
+@router.post(
+    "/password-reset/confirm",
+    response_model=AuthenticationMessage,
+)
+def confirm_password_reset(
+    data: PasswordResetConfirm,
+    http_request: Request,
+    db: Session = Depends(get_db),
+):
+    enforce_rate_limit(
+        http_request,
+        scope="password-reset-confirm",
+        limit=10,
+        window_seconds=3600,
+    )
+
+    try:
+        reset_user_password(
+            db=db,
+            raw_token=data.token,
+            new_password=data.new_password,
+        )
+
+        return {
+            "message": (
+                "Password reset successfully. "
+                "You can now log in."
+            ),
+        }
+
+    except ValueError as error:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
+        )
 @router.get(
     "/me",
     response_model=UserResponse,

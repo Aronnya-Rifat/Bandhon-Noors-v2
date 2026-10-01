@@ -54,3 +54,28 @@ class RegisterRequest(BaseModel):
         min_length=8,
         max_length=72,
     )
+
+class PasswordResetRequest(
+    BaseModel,
+):
+    email: EmailStr
+
+
+class PasswordResetConfirm(
+    BaseModel,
+):
+    token: str = Field(
+        min_length=32,
+        max_length=255,
+    )
+
+    new_password: str = Field(
+        min_length=8,
+        max_length=72,
+    )
+
+
+class AuthenticationMessage(
+    BaseModel,
+):
+    message: str

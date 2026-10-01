@@ -41,3 +41,6 @@ from app.models.chat import (
 )
 from app.models.review import ProductReview
 from app.models.wishlist import WishlistItem
+from app.models.password_reset import (
+    PasswordResetToken,
+)

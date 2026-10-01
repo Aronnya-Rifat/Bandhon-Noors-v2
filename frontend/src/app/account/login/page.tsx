@@ -148,7 +148,15 @@ export default function LoginPage() {
               minLength={8}
               required
               className="w-full rounded-lg border px-4 py-3"
-            />
+            /><div className="text-right">
+              <Link
+                href="/account/forgot-password"
+                className="text-sm text-pink-600 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            
           </div>
 
           {error && (
