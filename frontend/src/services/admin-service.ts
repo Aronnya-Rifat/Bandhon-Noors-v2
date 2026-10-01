@@ -84,7 +84,17 @@ export function getAdminOrders(
     },
   );
 }
-
+export function getAdminOrder(
+  token: string,
+  orderId: number,
+): Promise<Order> {
+  return apiRequest<Order>(
+    `/admin/orders/${orderId}`,
+    {
+      token,
+    },
+  );
+}
 export function updateAdminOrderStatus(
   token: string,
   orderId: number,

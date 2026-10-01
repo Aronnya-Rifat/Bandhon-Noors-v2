@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdminShipmentEditor from "@/components/admin/AdminShipmentEditor";
 import OrderSummaryCard from "@/components/order/OrderSummaryCard";
@@ -235,7 +235,16 @@ export default function AdminOrdersPage() {
                     </p>
                   </div>
 
-                  <OrderSummaryCard order={order} showAddress />
+                  <div className="mt-3">
+                    <Link
+                      href={`/admin/orders/${order.id}/print`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Print invoice
+                    </Link>
+                  </div>
                   {token && (
                     <AdminShipmentEditor
                       token={token}

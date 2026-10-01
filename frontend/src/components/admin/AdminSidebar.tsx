@@ -101,7 +101,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           type="button"
           aria-label="Close admin menu overlay"
           onClick={() => setExpanded(false)}
-          className="fixed inset-0 z-30 bg-black/30 md:hidden"
+          className="fixed inset-0 z-30 bg-black/30 print:hidden md:hidden"
         />
       )}
 
@@ -112,7 +112,9 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           border-r border-gray-200
           bg-white
           transition-[width] duration-200
+          print:hidden
           ${expanded ? "w-64" : "w-16"}
+          
         `}
       >
         <div className="flex h-16 shrink-0 items-center border-b border-gray-200 px-3">
