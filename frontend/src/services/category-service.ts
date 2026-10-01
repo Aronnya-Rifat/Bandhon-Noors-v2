@@ -11,7 +11,9 @@
 
 
 import type { Category } from "@/types/category";
-
+import {
+  getApiAssetUrl,
+} from "@/lib/api";
 import { apiRequest } from "@/lib/api";
 
 
@@ -25,11 +27,6 @@ export async function getCategories(): Promise<Category[]> {
     );
 
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://127.0.0.1:8000";
-
-
 
   return categories.map(
     (category) => ({
@@ -39,7 +36,9 @@ export async function getCategories(): Promise<Category[]> {
 
       image_url:
         category.image_url
-          ? `${API_URL}${category.image_url}`
+          ? getApiAssetUrl(
+              category.image_url,
+            )
           : null,
 
     })

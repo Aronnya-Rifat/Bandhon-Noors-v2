@@ -15,6 +15,9 @@
  * GET /products/{id}
  */
 
+import type {
+  Metadata,
+} from "next";
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import ProductPurchase from "@/components/product/ProductPurchase";
@@ -33,7 +36,71 @@ interface ProductPageProps {
     id: string;
   }>;
 }
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { id } = await params;
 
+  const productId = Number(id);
+
+  if (
+    !Number.isInteger(productId) ||
+    productId <= 0
+  ) {
+    return {
+      title: "Product not found",
+    };
+  }
+
+  try {
+    const product =
+      await getProductById(
+        productId,
+      );
+
+    const description =
+      product.description?.slice(
+        0,
+        160,
+      ) ||
+      `Shop ${product.name} from Bandhon Noors.`;
+
+    const image =
+      product.images[0]?.file_url ||
+      product.thumbnail_url ||
+      "/logo.png";
+
+    return {
+      title: product.name,
+      description,
+
+      openGraph: {
+        title: product.name,
+        description,
+        type: "website",
+        images: [
+          {
+            url: image,
+            alt: product.name,
+          },
+        ],
+      },
+
+      twitter: {
+        card: "summary_large_image",
+        title: product.name,
+        description,
+        images: [
+          image,
+        ],
+      },
+    };
+  } catch {
+    return {
+      title: "Product",
+    };
+  }
+}
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
