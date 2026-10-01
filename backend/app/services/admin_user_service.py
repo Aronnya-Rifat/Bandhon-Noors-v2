@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
-
-from app.core.security import hash_password
+from app.core.security import (
+    hash_password,
+    validate_password_strength,
+)
 from app.models.user import User, UserRole
 from app.schemas.admin_user import AdminCreateRequest
 
@@ -14,6 +16,10 @@ def create_admin_user(
 
     Only SUPER_ADMIN should call this service.
     """
+    validate_password_strength(
+        data.password,
+        minimum_length=12,
+    )
     email = (
         str(data.email)
         .strip()

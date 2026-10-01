@@ -62,13 +62,44 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const error: unknown = await response.json().catch(() => null);
 
-    const message =
+    let message =
+      "API request failed";
+
+    if (
       typeof error === "object" &&
       error !== null &&
-      "detail" in error &&
-      typeof error.detail === "string"
-        ? error.detail
-        : "API request failed";
+      "detail" in error
+    ) {
+      if (
+        typeof error.detail ===
+        "string"
+      ) {
+        message = error.detail;
+      } else if (
+        Array.isArray(
+          error.detail,
+        ) &&
+        error.detail.length > 0
+      ) {
+        const firstError =
+          error.detail[0];
+
+        if (
+          typeof firstError ===
+            "object" &&
+          firstError !== null &&
+          "msg" in firstError &&
+          typeof firstError.msg ===
+            "string"
+        ) {
+          message =
+            firstError.msg.replace(
+              /^Value error,\s*/i,
+              "",
+            );
+        }
+      }
+    }
 
     throw new ApiError(message, response.status);
   }

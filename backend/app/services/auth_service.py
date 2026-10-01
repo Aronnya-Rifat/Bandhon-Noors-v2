@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 
 from app.core.security import (
     create_access_token,
+    hash_password,
+    validate_password_strength,
     verify_password,
 )
-
 
 from app.models.user import (
     User,
@@ -16,11 +17,7 @@ from app.schemas.user import (
     UserProfileUpdate,
 )
 from app.schemas.auth import RegisterRequest
-from app.core.security import (
-    create_access_token,
-    hash_password,
-    verify_password,
-)
+
 
 def authenticate_user(
     db: Session,
@@ -98,6 +95,10 @@ def register_user(
         data.phone.strip()
         if data.phone
         else None
+    )
+    validate_password_strength(
+        data.password,
+        minimum_length=8,
     )
     existing_user = (
         db.query(User)
@@ -230,7 +231,19 @@ def change_user_password(
         raise ValueError(
             "Current password is incorrect"
         )
+    minimum_length = (
+        12
+        if user.role in (
+            UserRole.ADMIN,
+            UserRole.SUPER_ADMIN,
+        )
+        else 8
+    )
 
+    validate_password_strength(
+        data.new_password,
+        minimum_length=minimum_length,
+    )
     if verify_password(
         data.new_password,
         user.password_hash,

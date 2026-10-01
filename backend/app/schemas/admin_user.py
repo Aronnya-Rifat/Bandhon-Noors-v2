@@ -19,7 +19,7 @@ class AdminCreateRequest(BaseModel):
     )
 
     password: str = Field(
-        min_length=8,
+        min_length=12,
         max_length=72,
     )
 

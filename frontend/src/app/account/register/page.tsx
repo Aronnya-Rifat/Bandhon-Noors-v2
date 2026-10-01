@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  SubmitEvent,
-  useEffect,
-  useState,
-} from "react";
+import { SubmitEvent, useEffect, useState } from "react";
 
 import { ApiError } from "@/lib/api";
 import {
@@ -19,41 +15,27 @@ import { useAuthStore } from "@/store/auth-store";
 export default function RegisterPage() {
   const router = useRouter();
 
-  const setSession =
-    useAuthStore(
-      (state) => state.setSession,
-    );
-  const token =
-    useAuthStore(
-      (state) => state.token,
-    );
+  const setSession = useAuthStore((state) => state.setSession);
+  const token = useAuthStore((state) => state.token);
 
   useEffect(() => {
     if (token) {
       router.replace("/account");
     }
   }, [token, router]);
-  const [name, setName] =
-    useState("");
+  const [name, setName] = useState("");
 
-  const [email, setEmail] =
-    useState("");
+  const [email, setEmail] = useState("");
 
-  const [phone, setPhone] =
-    useState("");
+  const [phone, setPhone] = useState("");
 
-  const [password, setPassword] =
-    useState("");
+  const [password, setPassword] = useState("");
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(
-    event: SubmitEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError(null);
@@ -67,23 +49,16 @@ export default function RegisterPage() {
         password,
       });
 
-      const tokenResponse =
-        await loginCustomer({
-          login: email.trim(),
-          password,
-        });
+      const tokenResponse = await loginCustomer({
+        login: email.trim(),
+        password,
+      });
 
-      const authenticatedUser =
-        await getCurrentUser(
-          tokenResponse.access_token,
-        );
-
-      setSession(
+      const authenticatedUser = await getCurrentUser(
         tokenResponse.access_token,
-        authenticatedUser,
       );
 
-      
+      setSession(tokenResponse.access_token, authenticatedUser);
 
       router.push("/account");
     } catch (requestError) {
@@ -104,15 +79,10 @@ export default function RegisterPage() {
           Create Account
         </h1>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 space-y-5"
-        >
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <input
             value={name}
-            onChange={(event) =>
-              setName(event.target.value)
-            }
+            onChange={(event) => setName(event.target.value)}
             autoComplete="name"
             minLength={2}
             required
@@ -123,9 +93,7 @@ export default function RegisterPage() {
           <input
             type="email"
             value={email}
-            onChange={(event) =>
-              setEmail(event.target.value)
-            }
+            onChange={(event) => setEmail(event.target.value)}
             autoComplete="email"
             required
             placeholder="Email"
@@ -135,9 +103,7 @@ export default function RegisterPage() {
           <input
             type="tel"
             value={phone}
-            onChange={(event) =>
-              setPhone(event.target.value)
-            }
+            onChange={(event) => setPhone(event.target.value)}
             autoComplete="tel"
             placeholder="Phone number (optional)"
             className="w-full rounded-lg border px-4 py-3"
@@ -146,9 +112,7 @@ export default function RegisterPage() {
           <input
             type="password"
             value={password}
-            onChange={(event) =>
-              setPassword(event.target.value)
-            }
+            onChange={(event) => setPassword(event.target.value)}
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
@@ -156,12 +120,11 @@ export default function RegisterPage() {
             placeholder="Password"
             className="w-full rounded-lg border px-4 py-3"
           />
-
+          <p className="text-xs text-gray-500">
+            Use at least 8 characters.
+          </p>
           {error && (
-            <p
-              role="alert"
-              className="text-sm text-red-600"
-            >
+            <p role="alert" className="text-sm text-red-600">
               {error}
             </p>
           )}
@@ -181,18 +144,13 @@ export default function RegisterPage() {
               disabled:opacity-60
             "
           >
-            {isSubmitting
-              ? "Creating account..."
-              : "Create Account"}
+            {isSubmitting ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
-          <Link
-            href="/account/login"
-            className="text-pink-500 hover:underline"
-          >
+          <Link href="/account/login" className="text-pink-500 hover:underline">
             Login
           </Link>
         </p>
