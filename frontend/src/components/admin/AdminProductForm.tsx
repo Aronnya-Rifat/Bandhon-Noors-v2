@@ -160,29 +160,18 @@ export default function AdminProductForm({
 
       <div className="md:col-span-2">
         <label
-          htmlFor="size-chart"
+          htmlFor="description"
           className="mb-2 block text-sm font-medium text-gray-700"
         >
-          Size Chart or Measurements
-          <span className="ml-2 font-normal text-gray-400">Optional</span>
+          Description
         </label>
 
         <textarea
-          id="size-chart"
-          value={sizeChart}
-          onChange={(event) => setSizeChart(event.target.value)}
-          placeholder={`Example:
-S: Chest 36", Length 40"
-M: Chest 38", Length 41"
-L: Chest 40", Length 42"`}
-          className="h-36 w-full rounded-lg border px-4 py-3"
+          id="description"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          className="h-32 w-full rounded-lg border px-4 py-3"
         />
-
-        <p className="mt-2 text-xs leading-5 text-gray-500">
-          This field only explains measurements to customers. To make S, M, or L
-          selectable, enable product variants and create a separate variant for
-          each size.
-        </p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -231,15 +220,26 @@ L: Chest 40", Length 42"`}
           htmlFor="size-chart"
           className="mb-2 block text-sm font-medium text-gray-700"
         >
-          Size Guide
+          Size Chart or Measurements
+          <span className="ml-2 font-normal text-gray-400">Optional</span>
         </label>
 
         <textarea
           id="size-chart"
           value={sizeChart}
           onChange={(event) => setSizeChart(event.target.value)}
-          className="h-28 w-full rounded-lg border px-4 py-3"
+          placeholder={`Example:
+S: Chest 36", Length 40"
+M: Chest 38", Length 41"
+L: Chest 40", Length 42"`}
+          className="h-36 w-full rounded-lg border px-4 py-3"
         />
+
+        <p className="mt-2 text-xs leading-5 text-gray-500">
+          This field only explains measurements to customers. To make S, M, or L
+          selectable, enable product variants and create a separate variant for
+          each size.
+        </p>
       </div>
 
       <label className="flex items-center gap-3 md:col-span-2">
