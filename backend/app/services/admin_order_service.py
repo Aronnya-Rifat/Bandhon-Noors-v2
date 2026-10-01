@@ -137,9 +137,9 @@ def update_order_status(
                     ProductVariant.id
                     == item.variant_id
                 )
+                .with_for_update()
                 .first()
             )
-
             if variant is None:
                 raise ValueError(
                     f"Variant {item.variant_id} not found"

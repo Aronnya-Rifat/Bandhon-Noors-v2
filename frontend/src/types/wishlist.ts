@@ -22,3 +22,6 @@ export interface WishlistItem {
   image: string;
 
 }
+export interface WishlistResponse {
+  items: WishlistItem[];
+}

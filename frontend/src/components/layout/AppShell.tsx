@@ -5,7 +5,7 @@ import ChatWidget from "@/components/chat/ChatWidget";
 import CartProvider from "@/components/cart/CartProvider";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-
+import WishlistProvider from "@/components/wishlist/WishlistProvider";
 interface AppShellProps {
   children: React.ReactNode;
 }
@@ -28,6 +28,8 @@ export default function AppShell({
       <Header />
 
       <CartProvider />
+
+      <WishlistProvider />
 
       <ChatWidget />
 

@@ -39,7 +39,9 @@ from app.routes.reviews import (
 from app.routes.admin_reviews import (
     router as admin_reviews_router,
 )
-
+from app.routes.wishlist import (
+    router as wishlist_router,
+)
 
 
 api_router = APIRouter()
@@ -150,4 +152,8 @@ api_router.include_router(
 )
 api_router.include_router(
     admin_reviews_router,
+)
+
+api_router.include_router(
+    wishlist_router,
 )

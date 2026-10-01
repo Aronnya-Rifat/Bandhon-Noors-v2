@@ -57,6 +57,7 @@ class Payment(Base):
 
     order_id: Mapped[int] = mapped_column(
         ForeignKey("orders.id"),
+        unique=True,
         nullable=False,
     )
     order = relationship(

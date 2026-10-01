@@ -114,6 +114,7 @@ def create_order(
                 ProductVariant.id
                 == item.variant_id
             )
+            .with_for_update()
             .first()
         )
 
@@ -122,14 +123,19 @@ def create_order(
             raise ValueError(
                 "Variant not found"
             )
-
+        if not variant.product.is_active:
+            raise ValueError(
+                f"{variant.product.name} is no longer available"
+            )
 
         if (
             variant.stock_quantity
             < item.quantity
         ):
             raise ValueError(
-                "Insufficient stock"
+                f"Only {variant.stock_quantity} "
+                f"unit(s) of {variant.product.name} "
+                f"are currently available"
             )
 
 
@@ -322,13 +328,12 @@ def cancel_customer_order(
 
     for item in order.items:
         variant = (
-            db.query(
-                ProductVariant
-            )
+            db.query(ProductVariant)
             .filter(
                 ProductVariant.id
                 == item.variant_id
             )
+            .with_for_update()
             .first()
         )
 

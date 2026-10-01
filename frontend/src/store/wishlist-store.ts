@@ -24,6 +24,17 @@ interface WishlistStore {
   removeItem: (productId: number) => void;
 
   clearWishlist: () => void;
+
+  setItems: (
+    items: WishlistItem[],
+  ) => void;
+
+  syncedCustomerId:
+    number | null;
+
+  setSyncedCustomerId: (
+    customerId: number | null,
+  ) => void;
 }
 
 export const useWishlistStore =
@@ -32,6 +43,20 @@ create<WishlistStore>()(
 
     (set) => ({
   items: [],
+  syncedCustomerId: null,
+
+  setItems: (items) =>
+    set({
+      items,
+    }),
+
+  setSyncedCustomerId: (
+    customerId,
+  ) =>
+    set({
+      syncedCustomerId:
+        customerId,
+    }),
 
 addItem: (item) =>
   set((state) => {

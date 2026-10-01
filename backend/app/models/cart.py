@@ -1,6 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship
 from app.models.base import Base
@@ -21,6 +25,7 @@ class Cart(Base):
 
     customer_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
+        unique=True,
         nullable=False,
     )
 
@@ -53,7 +58,13 @@ class CartItem(Base):
     """
 
     __tablename__ = "cart_items"
-
+    __table_args__ = (
+        UniqueConstraint(
+            "cart_id",
+            "variant_id",
+            name="uq_cart_item_variant",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(
         primary_key=True,

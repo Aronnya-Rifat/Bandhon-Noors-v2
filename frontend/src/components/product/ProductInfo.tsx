@@ -16,7 +16,11 @@
 "use client";
 
 import { Heart } from "lucide-react";
-
+import {
+  addCustomerWishlistItem,
+  removeCustomerWishlistItem,
+} from "@/services/wishlist-service";
+import { useAuthStore } from "@/store/auth-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import type { ProductDetail } from "@/types/product";
 import { formatCurrency } from "@/lib/utils";
@@ -28,13 +32,22 @@ interface ProductInfoProps {
 export default function ProductInfo({ product }: ProductInfoProps) {
   const addItem = useWishlistStore((state) => state.addItem);
   const removeItem = useWishlistStore((state) => state.removeItem);
+  const token = useAuthStore((state) => state.token);
 
+  const user = useAuthStore((state) => state.user);
+
+  const setItems = useWishlistStore((state) => state.setItems);
   const wishlistItems = useWishlistStore((state) => state.items);
 
   const isSaved = wishlistItems.some((item) => item.product_id === product.id);
-  function handleWishlist() {
+  async function handleWishlist() {
     if (isSaved) {
       removeItem(product.id);
+      if (token && user?.role === "CUSTOMER") {
+        const result = await removeCustomerWishlistItem(token, product.id);
+
+        setItems(result.items);
+      }
       return;
     }
 
@@ -45,6 +58,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       price: product.price,
       image: product.thumbnail_url ?? "/logo.png",
     });
+    if (token && user?.role === "CUSTOMER") {
+      const result = await addCustomerWishlistItem(token, product.id);
+
+      setItems(result.items);
+    }
   }
   return (
     <div>
@@ -103,7 +121,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
       <button
         type="button"
-        onClick={handleWishlist}
+        onClick={() => {
+          void handleWishlist();
+        }}
         className="
     mt-8
     flex

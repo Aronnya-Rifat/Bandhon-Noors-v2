@@ -24,7 +24,11 @@ import { Heart } from "lucide-react";
 import StoreImage from "@/components/ui/StoreImage";
 import { formatCurrency } from "@/lib/utils";
 import type { ProductCardProduct } from "@/types/product";
-
+import {
+  addCustomerWishlistItem,
+  removeCustomerWishlistItem,
+} from "@/services/wishlist-service";
+import { useAuthStore } from "@/store/auth-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 
 interface ProductCardProps {
@@ -33,18 +37,27 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useWishlistStore((state) => state.addItem);
+  const token = useAuthStore((state) => state.token);
 
+  const user = useAuthStore((state) => state.user);
+
+  const setItems = useWishlistStore((state) => state.setItems);
   const removeItem = useWishlistStore((state) => state.removeItem);
 
   const wishlistItems = useWishlistStore((state) => state.items);
 
   const isSaved = wishlistItems.some((item) => item.product_id === product.id);
   const productImage = product.thumbnail_url ?? "/logo.png";
-  function handleWishlist(event: React.MouseEvent) {
+  async function handleWishlist(event: React.MouseEvent) {
     event.preventDefault();
 
     if (isSaved) {
       removeItem(product.id);
+      if (token && user?.role === "CUSTOMER") {
+        const result = await removeCustomerWishlistItem(token, product.id);
+
+        setItems(result.items);
+      }
 
       return;
     }
@@ -60,6 +73,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       image: productImage,
     });
+    if (token && user?.role === "CUSTOMER") {
+      const result = await addCustomerWishlistItem(token, product.id);
+
+      setItems(result.items);
+    }
   }
 
   return (
@@ -72,7 +90,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <button
         type="button"
-        onClick={handleWishlist}
+        onClick={(event) => {
+          void handleWishlist(event);
+        }}
         className="
           absolute
           top-3

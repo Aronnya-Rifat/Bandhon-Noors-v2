@@ -40,3 +40,4 @@ from app.models.chat import (
     ChatSenderType,
 )
 from app.models.review import ProductReview
+from app.models.wishlist import WishlistItem

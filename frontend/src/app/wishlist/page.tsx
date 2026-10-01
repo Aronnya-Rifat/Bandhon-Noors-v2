@@ -11,14 +11,29 @@
 "use client";
 
 import Link from "next/link";
-
+import { removeCustomerWishlistItem } from "@/services/wishlist-service";
+import { useAuthStore } from "@/store/auth-store";
 import StoreImage from "@/components/ui/StoreImage";
 import { formatCurrency } from "@/lib/utils";
 import { useWishlistStore } from "@/store/wishlist-store";
 
 export default function WishlistPage() {
   const items = useWishlistStore((state) => state.items);
+  const token = useAuthStore((state) => state.token);
 
+  const user = useAuthStore((state) => state.user);
+
+  const setItems = useWishlistStore((state) => state.setItems);
+
+  async function handleRemove(productId: number) {
+    removeItem(productId);
+
+    if (token && user?.role === "CUSTOMER") {
+      const result = await removeCustomerWishlistItem(token, productId);
+
+      setItems(result.items);
+    }
+  }
   const removeItem = useWishlistStore((state) => state.removeItem);
 
   return (
@@ -119,7 +134,9 @@ export default function WishlistPage() {
               <button
                 type="button"
                 aria-label={`Remove ${item.name} from wishlist`}
-                onClick={() => removeItem(item.product_id)}
+                onClick={() => {
+                  void handleRemove(item.product_id);
+                }}
                 className="
                         mt-3
                         text-sm
