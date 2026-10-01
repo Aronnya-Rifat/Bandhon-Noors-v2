@@ -33,7 +33,10 @@ const statusLabels: Record<
 
 const paymentMethodLabels = {
   COD: "Cash on Delivery",
-  CARD: "Card",
+  BKASH: "bKash",
+  NAGAD: "Nagad",
+  BANK: "Bank Payment",
+  CARD: "Credit/Debit Card",
   MOBILE_BANKING: "Mobile Banking",
 } as const;
 

@@ -225,9 +225,7 @@ export default function ProductListing({
           selectedColor={selectedColor}
           onSizeChange={changeSize}
           onColorChange={changeColor}
-          sizes={
-            categoriesWithSizes.has(selectedCategory) ? availableSizes : []
-          }
+          sizes={visibleSizes}
           colors={availableColors}
         />
       </div>
@@ -378,9 +376,7 @@ export default function ProductListing({
               selectedColor={selectedColor}
               onSizeChange={changeSize}
               onColorChange={changeColor}
-              sizes={
-                categoriesWithSizes.has(selectedCategory) ? availableSizes : []
-              }
+              sizes={visibleSizes}
               colors={availableColors}
             />
           </div>

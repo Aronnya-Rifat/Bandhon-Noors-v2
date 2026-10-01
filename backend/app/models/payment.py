@@ -23,9 +23,13 @@ class PaymentMethod(str, PyEnum):
     """
     Available payment methods.
     """
-
     COD = "COD"
+    BKASH = "BKASH"
+    NAGAD = "NAGAD"
+    BANK = "BANK"
     CARD = "CARD"
+
+    # Retained for existing database records.
     MOBILE_BANKING = "MOBILE_BANKING"
 
 

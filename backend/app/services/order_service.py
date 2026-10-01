@@ -33,14 +33,7 @@ def create_order(
     """
     Create order from customer cart.
     """
-    if (
-        data.payment_method
-        != PaymentMethod.COD
-    ):
-        raise ValueError(
-            "Only Cash on Delivery is currently available"
-        )
-
+    
     customer_cart_items = (
         db.query(CartItem)
         .join(

@@ -42,6 +42,10 @@ from app.routes.admin_reviews import (
 from app.routes.wishlist import (
     router as wishlist_router,
 )
+from app.routes.sslcommerz import (
+    router as sslcommerz_router,
+)
+
 
 
 api_router = APIRouter()
@@ -156,4 +160,8 @@ api_router.include_router(
 
 api_router.include_router(
     wishlist_router,
+)
+
+api_router.include_router(
+    sslcommerz_router,
 )

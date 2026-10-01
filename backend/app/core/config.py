@@ -40,7 +40,13 @@ class Settings(BaseSettings):
         "http://localhost:3000"
     )
     upload_dir: str = "uploads"
+    backend_url: str = (
+        "http://127.0.0.1:8000"
+    )
 
+    sslcommerz_store_id: str | None = None
+    sslcommerz_store_password: str | None = None
+    sslcommerz_is_sandbox: bool = True
     media_url_path: str = "/uploads"
     smtp_host: str | None = None
     smtp_port: int = 587

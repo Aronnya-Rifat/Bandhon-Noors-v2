@@ -27,6 +27,9 @@ export type DeliveryArea =
   | "OUTSIDE";
 export type PaymentMethod =
   | "COD"
+  | "BKASH"
+  | "NAGAD"
+  | "BANK"
   | "CARD"
   | "MOBILE_BANKING";
 
