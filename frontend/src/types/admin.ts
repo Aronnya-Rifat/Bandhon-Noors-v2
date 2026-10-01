@@ -193,3 +193,9 @@ export interface AdminReviewPage {
   page_size: number;
   total_pages: number;
 }
+export interface AdminStaffCreate {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+}

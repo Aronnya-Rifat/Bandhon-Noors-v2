@@ -1,38 +1,38 @@
 "use client";
 
 import {
-  SyntheticEvent,
   useEffect,
   useState,
+  type SyntheticEvent,
 } from "react";
 
 import { ApiError } from "@/lib/api";
 import {
-  createAdminInvitation,
-  getAdminInvitations,
+  createAdminStaff,
   getAdminStaff,
-  reviewAdminInvitation,
   updateAdminStaffStatus,
 } from "@/services/admin-service";
 import { useAuthStore } from "@/store/auth-store";
+
 import type {
-  AdminInvitation,
   AdminStaffUser,
 } from "@/types/admin";
 
-export default function AdminStaffPage() {
-  const token =
-    useAuthStore(
-      (state) => state.token,
-    );
 
-  const user =
-    useAuthStore(
-      (state) => state.user,
-    );
+export default function AdminStaffPage() {
+  const token = useAuthStore(
+    (state) => state.token,
+  );
+
+  const user = useAuthStore(
+    (state) => state.user,
+  );
 
   const isSuperAdmin =
     user?.role === "SUPER_ADMIN";
+
+  const [staff, setStaff] =
+    useState<AdminStaffUser[]>([]);
 
   const [name, setName] =
     useState("");
@@ -40,14 +40,11 @@ export default function AdminStaffPage() {
   const [email, setEmail] =
     useState("");
 
-  const [reason, setReason] =
+  const [phone, setPhone] =
     useState("");
 
-  const [staff, setStaff] =
-    useState<AdminStaffUser[]>([]);
-
-  const [invitations, setInvitations] =
-    useState<AdminInvitation[]>([]);
+  const [password, setPassword] =
+    useState("");
 
   const [isLoading, setIsLoading] =
     useState(true);
@@ -62,37 +59,22 @@ export default function AdminStaffPage() {
     useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
-
-    if (!isSuperAdmin) {
-      setIsLoading(false);
+    if (!token || !isSuperAdmin) {
       return;
     }
 
     const accessToken = token;
     let cancelled = false;
 
-    async function loadStaffData() {
+    async function loadStaff() {
       try {
-        const [
-          staffData,
-          invitationData,
-        ] = await Promise.all([
-          getAdminStaff(
+        const result =
+          await getAdminStaff(
             accessToken,
-          ),
-          getAdminInvitations(
-            accessToken,
-          ),
-        ]);
+          );
 
         if (!cancelled) {
-          setStaff(staffData);
-          setInvitations(
-            invitationData,
-          );
+          setStaff(result);
         }
       } catch (requestError) {
         if (!cancelled) {
@@ -109,7 +91,7 @@ export default function AdminStaffPage() {
       }
     }
 
-    void loadStaffData();
+    void loadStaff();
 
     return () => {
       cancelled = true;
@@ -119,12 +101,12 @@ export default function AdminStaffPage() {
     isSuperAdmin,
   ]);
 
-  async function handleInvite(
+  async function handleCreate(
     event: SyntheticEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
-    if (!token) {
+    if (!token || !isSuperAdmin) {
       return;
     }
 
@@ -133,98 +115,55 @@ export default function AdminStaffPage() {
     setMessage(null);
 
     try {
-      const invitation =
-        await createAdminInvitation(
+      const created =
+        await createAdminStaff(
           token,
           {
+            name: name.trim(),
             email: email.trim(),
-            name:
-              name.trim() ||
+            phone:
+              phone.trim() ||
               undefined,
-            reason:
-              reason.trim(),
+            password,
           },
         );
 
-      if (isSuperAdmin) {
-        setInvitations(
-          (current) => [
-            invitation,
-            ...current,
-          ],
-        );
-      }
+      setStaff(
+        (current) => [
+          created,
+          ...current,
+        ],
+      );
 
       setName("");
       setEmail("");
-      setReason("");
+      setPhone("");
+      setPassword("");
 
       setMessage(
-        isSuperAdmin
-          ? "Invitation request created. You can now review it below."
-          : "Invitation request sent to the super administrator.",
+        "Administrator account created.",
       );
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
           ? requestError.message
-          : "Unable to create the invitation.",
+          : "Unable to create administrator.",
       );
     } finally {
       setIsWorking(false);
     }
   }
 
-  async function handleReview(
-    invitationId: number,
-    decision:
-      | "approve"
-      | "reject",
-  ) {
-    if (!token) {
-      return;
-    }
-
-    setIsWorking(true);
-    setError(null);
-
-    try {
-      const updated =
-        await reviewAdminInvitation(
-          token,
-          invitationId,
-          decision,
-        );
-
-      setInvitations((current) =>
-        current.map(
-          (invitation) =>
-            invitation.id ===
-            updated.id
-              ? updated
-              : invitation,
-        ),
-      );
-    } catch (requestError) {
-      setError(
-        requestError instanceof ApiError
-          ? requestError.message
-          : "Unable to review the invitation.",
-      );
-    } finally {
-      setIsWorking(false);
-    }
-  }
-
-  async function handleStaffStatus(
+  async function handleStatus(
     admin: AdminStaffUser,
   ) {
-    if (!token) {
+    if (!token || !isSuperAdmin) {
       return;
     }
 
     setIsWorking(true);
     setError(null);
+    setMessage(null);
 
     try {
       const updated =
@@ -234,23 +173,38 @@ export default function AdminStaffPage() {
           !admin.is_active,
         );
 
-      setStaff((current) =>
-        current.map(
-          (item) =>
-            item.id === updated.id
-              ? updated
-              : item,
-        ),
+      setStaff(
+        (current) =>
+          current.map(
+            (item) =>
+              item.id === updated.id
+                ? updated
+                : item,
+          ),
       );
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
           ? requestError.message
-          : "Unable to update the administrator.",
+          : "Unable to update administrator.",
       );
     } finally {
       setIsWorking(false);
     }
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <main className="w-full px-4 py-8 md:px-8">
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Staff
+        </h1>
+
+        <p className="mt-5 border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Only the super administrator can manage staff accounts.
+        </p>
+      </main>
+    );
   }
 
   return (
@@ -261,7 +215,7 @@ export default function AdminStaffPage() {
         </h1>
 
         <p className="mt-1 text-sm text-gray-500">
-          Request and manage administrator access.
+          Create and manage administrator accounts.
         </p>
       </div>
 
@@ -281,23 +235,25 @@ export default function AdminStaffPage() {
       )}
 
       <form
-        onSubmit={handleInvite}
+        onSubmit={handleCreate}
         className="mt-6 border border-gray-200 bg-white p-5"
       >
         <h2 className="font-semibold text-gray-900">
-          Request administrator access
+          Create administrator
         </h2>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-sm text-gray-700">
             Name
             <input
+              required
+              minLength={2}
+              maxLength={100}
               value={name}
               onChange={(event) =>
-                setName(
-                  event.target.value,
-                )
+                setName(event.target.value)
               }
+              autoComplete="name"
               className="mt-1 w-full border px-3 py-2"
             />
           </label>
@@ -305,211 +261,159 @@ export default function AdminStaffPage() {
           <label className="text-sm text-gray-700">
             Email
             <input
-              type="email"
               required
+              type="email"
               value={email}
               onChange={(event) =>
-                setEmail(
-                  event.target.value,
-                )
+                setEmail(event.target.value)
               }
+              autoComplete="email"
               className="mt-1 w-full border px-3 py-2"
             />
           </label>
 
-          <label className="text-sm text-gray-700 md:col-span-2">
-            Reason
-            <textarea
-              required
-              minLength={10}
-              maxLength={500}
-              value={reason}
+          <label className="text-sm text-gray-700">
+            Phone
+            <input
+              type="tel"
+              value={phone}
               onChange={(event) =>
-                setReason(
-                  event.target.value,
-                )
+                setPhone(event.target.value)
               }
-              rows={3}
+              autoComplete="tel"
+              className="mt-1 w-full border px-3 py-2"
+            />
+          </label>
+
+          <label className="text-sm text-gray-700">
+            Temporary password
+            <input
+              required
+              type="password"
+              minLength={8}
+              maxLength={72}
+              value={password}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
+              autoComplete="new-password"
               className="mt-1 w-full border px-3 py-2"
             />
           </label>
         </div>
+
+        <p className="mt-3 text-xs text-gray-500">
+          Send the password securely. The administrator should change it after signing in.
+        </p>
 
         <button
           type="submit"
           disabled={isWorking}
           className="mt-4 bg-gray-900 px-5 py-2 text-sm text-white disabled:opacity-50"
         >
-          Submit request
+          {isWorking
+            ? "Creating..."
+            : "Create administrator"}
         </button>
       </form>
 
-      {isSuperAdmin && (
-        <>
-          <section className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Administrators
-            </h2>
+      <section className="mt-8">
+        <h2 className="text-xl font-semibold text-gray-900">
+          Administrators
+        </h2>
 
-            {isLoading ? (
-              <p className="mt-4 text-sm text-gray-500">
-                Loading staff...
-              </p>
-            ) : (
-              <div className="mt-4 overflow-x-auto border bg-white">
-                <table className="w-full min-w-[700px] text-left text-sm">
-                  <thead className="border-b bg-gray-100 text-gray-600">
-                    <tr>
-                      <th className="px-4 py-3">
-                        Name
-                      </th>
-                      <th className="px-4 py-3">
-                        Email
-                      </th>
-                      <th className="px-4 py-3">
-                        Role
-                      </th>
-                      <th className="px-4 py-3">
-                        Status
-                      </th>
-                      <th className="px-4 py-3">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
+        {isLoading ? (
+          <p className="mt-4 text-sm text-gray-500">
+            Loading staff...
+          </p>
+        ) : (
+          <div className="mt-4 overflow-x-auto border bg-white">
+            <table className="w-full min-w-[700px] text-left text-sm">
+              <thead className="border-b bg-gray-100 text-gray-600">
+                <tr>
+                  <th className="px-4 py-3">
+                    Name
+                  </th>
 
-                  <tbody>
-                    {staff.map(
-                      (admin) => (
-                        <tr
-                          key={admin.id}
-                          className="border-b last:border-b-0"
-                        >
-                          <td className="px-4 py-3">
-                            {admin.name}
-                          </td>
-                          <td className="px-4 py-3">
-                            {admin.email}
-                          </td>
-                          <td className="px-4 py-3">
-                            {admin.role}
-                          </td>
-                          <td className="px-4 py-3">
-                            {admin.is_active
-                              ? "Active"
-                              : "Inactive"}
-                          </td>
-                          <td className="px-4 py-3">
-                            {admin.role ===
-                            "ADMIN" ? (
-                              <button
-                                type="button"
-                                disabled={
-                                  isWorking
-                                }
-                                onClick={() =>
-                                  void handleStaffStatus(
-                                    admin,
-                                  )
-                                }
-                                className="text-red-600 disabled:opacity-50"
-                              >
-                                {admin.is_active
-                                  ? "Deactivate"
-                                  : "Activate"}
-                              </button>
-                            ) : (
-                              <span className="text-gray-400">
-                                Protected
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+                  <th className="px-4 py-3">
+                    Email
+                  </th>
 
-          <section className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Invitation requests
-            </h2>
+                  <th className="px-4 py-3">
+                    Phone
+                  </th>
 
-            <div className="mt-4 space-y-3">
-              {invitations.map(
-                (invitation) => (
-                  <article
-                    key={invitation.id}
-                    className="border border-gray-200 bg-white p-4"
+                  <th className="px-4 py-3">
+                    Role
+                  </th>
+
+                  <th className="px-4 py-3">
+                    Status
+                  </th>
+
+                  <th className="px-4 py-3">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {staff.map((admin) => (
+                  <tr
+                    key={admin.id}
+                    className="border-b last:border-b-0"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {invitation.name ??
-                            invitation.email}
-                        </p>
+                    <td className="px-4 py-3">
+                      {admin.name}
+                    </td>
 
-                        <p className="text-sm text-gray-500">
-                          {invitation.email}
-                        </p>
+                    <td className="px-4 py-3">
+                      {admin.email}
+                    </td>
 
-                        <p className="mt-2 text-sm text-gray-700">
-                          {invitation.reason}
-                        </p>
+                    <td className="px-4 py-3">
+                      {admin.phone ?? "—"}
+                    </td>
 
-                        <p className="mt-2 text-xs text-gray-500">
-                          Status:{" "}
-                          {invitation.status}
-                        </p>
-                      </div>
+                    <td className="px-4 py-3">
+                      {admin.role}
+                    </td>
 
-                      {invitation.status ===
-                        "PENDING" && (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={
-                              isWorking
-                            }
-                            onClick={() =>
-                              void handleReview(
-                                invitation.id,
-                                "approve",
-                              )
-                            }
-                            className="bg-green-700 px-3 py-2 text-xs text-white"
-                          >
-                            Approve
-                          </button>
+                    <td className="px-4 py-3">
+                      {admin.is_active
+                        ? "Active"
+                        : "Inactive"}
+                    </td>
 
-                          <button
-                            type="button"
-                            disabled={
-                              isWorking
-                            }
-                            onClick={() =>
-                              void handleReview(
-                                invitation.id,
-                                "reject",
-                              )
-                            }
-                            className="border border-red-200 px-3 py-2 text-xs text-red-600"
-                          >
-                            Reject
-                          </button>
-                        </div>
+                    <td className="px-4 py-3">
+                      {admin.role === "ADMIN" ? (
+                        <button
+                          type="button"
+                          disabled={isWorking}
+                          onClick={() => {
+                            void handleStatus(
+                              admin,
+                            );
+                          }}
+                          className="text-red-600 disabled:opacity-50"
+                        >
+                          {admin.is_active
+                            ? "Deactivate"
+                            : "Activate"}
+                        </button>
+                      ) : (
+                        <span className="text-gray-400">
+                          Protected
+                        </span>
                       )}
-                    </div>
-                  </article>
-                ),
-              )}
-            </div>
-          </section>
-        </>
-      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

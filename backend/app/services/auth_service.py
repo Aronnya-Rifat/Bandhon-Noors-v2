@@ -1,14 +1,11 @@
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
-from datetime import datetime
+
 from app.core.security import (
     create_access_token,
     verify_password,
 )
-from app.models.admin_invitation import (
-    AdminInvitation,
-    AdminInvitationStatus,
-)
+
 
 from app.models.user import (
     User,
@@ -86,65 +83,56 @@ def register_user(
     Approved admin invitations create ADMIN accounts.
     Normal registrations create CUSTOMER accounts.
     """
+    email = (
+        str(data.email)
+        .strip()
+        .lower()
+    )
 
+    phone = (
+        data.phone.strip()
+        if data.phone
+        else None
+    )
     existing_user = (
         db.query(User)
         .filter(
-            User.email == data.email
+            User.email == email
         )
         .first()
     )
-
+    
     if existing_user:
         raise ValueError(
             "Email already registered"
         )
 
-
-    role = UserRole.CUSTOMER
-
-
-    invitation = (
-        db.query(AdminInvitation)
-        .filter(
-            AdminInvitation.email == data.email,
-            AdminInvitation.status
-            == AdminInvitationStatus.APPROVED,
-            AdminInvitation.expires_at
-            > datetime.utcnow(),
+    if phone:
+        existing_phone = (
+            db.query(User)
+            .filter(
+                User.phone == phone
+            )
+            .first()
         )
-        .order_by(
-            AdminInvitation.approved_at.desc()
-        )
-        .first()
-    )
 
-
-    if invitation:
-        role = UserRole.ADMIN
-
+        if existing_phone:
+            raise ValueError(
+                "Phone number already registered"
+            )
 
     user = User(
-        name=data.name,
-        email=data.email,
-        phone=data.phone,
+        name=data.name.strip(),
+        email=email,
+        phone=phone,
         password_hash=hash_password(
             data.password
         ),
-        role=role,
+        role=UserRole.CUSTOMER,
         is_active=True,
     )
 
-
     db.add(user)
-
-
-    if invitation:
-        invitation.status = (
-            AdminInvitationStatus.USED
-        )
-
-
     db.commit()
     db.refresh(user)
 

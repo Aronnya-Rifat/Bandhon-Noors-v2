@@ -14,22 +14,44 @@ def create_admin_user(
 
     Only SUPER_ADMIN should call this service.
     """
-
-    existing_user = (
-        db.query(User)
-        .filter(User.email == data.email)
-        .first()
+    email = (
+        str(data.email)
+        .strip()
+        .lower()
     )
 
+    phone = (
+        data.phone.strip()
+        if data.phone
+        else None
+    )
+    existing_user = (
+        db.query(User)
+        .filter(User.email == email)
+        .first()
+    )
+    
     if existing_user:
         raise ValueError(
             "Email already registered"
         )
+    if phone:
+        existing_phone = (
+            db.query(User)
+            .filter(
+                User.phone == phone
+            )
+            .first()
+        )
 
+        if existing_phone:
+            raise ValueError(
+                "Phone number already registered"
+            )
     admin = User(
-        name=data.name,
-        email=data.email,
-        phone=data.phone,
+        name=data.name.strip(),
+        email=email,
+        phone=phone,
         password_hash=hash_password(
             data.password
         ),

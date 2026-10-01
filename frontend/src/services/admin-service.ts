@@ -24,6 +24,7 @@ AdminInvitation,
 AdminInvitationCreate,
 AdminStaffUser,
 AdminReviewPage,
+AdminStaffCreate,
 } from "@/types/admin";
 import type {
   Product,
@@ -496,6 +497,19 @@ export function updateAdminReviewVisibility(
     {
       method: "PATCH",
       token,
+    },
+  );
+}
+export function createAdminStaff(
+  token: string,
+  data: AdminStaffCreate,
+): Promise<AdminStaffUser> {
+  return apiRequest<AdminStaffUser>(
+    "/admin/users",
+    {
+      method: "POST",
+      token,
+      body: data,
     },
   );
 }

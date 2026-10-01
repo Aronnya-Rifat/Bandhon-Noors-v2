@@ -83,11 +83,7 @@ export default function RegisterPage() {
         authenticatedUser,
       );
 
-      router.push(
-        authenticatedUser.role === "CUSTOMER"
-          ? "/account"
-          : "/admin",
-      );
+      
 
       router.push("/account");
     } catch (requestError) {
