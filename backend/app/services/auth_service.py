@@ -244,7 +244,7 @@ def change_user_password(
             data.new_password
         )
     )
-
+    user.must_change_password = False
     db.commit()
     db.refresh(user)
 

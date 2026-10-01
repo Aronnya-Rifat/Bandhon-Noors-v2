@@ -76,7 +76,11 @@ def require_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required",
         )
-
+    if user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Password change required",
+        )
     return user
 
 
@@ -92,5 +96,9 @@ def require_super_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Super admin access required",
         )
-
+    if user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Password change required",
+        )
     return user

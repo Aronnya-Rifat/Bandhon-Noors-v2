@@ -23,6 +23,7 @@ class UserResponse(BaseModel):
     role: str
 
     is_active: bool
+    must_change_password: bool
 
 
     class Config:

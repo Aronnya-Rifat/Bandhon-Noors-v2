@@ -57,6 +57,7 @@ def create_admin_user(
         ),
         role=UserRole.ADMIN,
         is_active=True,
+        must_change_password=True,
     )
 
     db.add(admin)
