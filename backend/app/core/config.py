@@ -48,7 +48,10 @@ class Settings(BaseSettings):
     sslcommerz_store_password: str | None = None
     sslcommerz_is_sandbox: bool = True
     media_url_path: str = "/uploads"
-    smtp_host: str | None = None
+    resend_api_key: str | None = None
+    resend_from_email: str | None = None
+    resend_reply_to_email: str | None = None
+    smtp_host: str | None = None    
     smtp_port: int = 587
     smtp_username: str | None = None
     smtp_password: str | None = None

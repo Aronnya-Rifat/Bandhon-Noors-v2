@@ -3,35 +3,80 @@ from email.message import (
 )
 import logging
 import smtplib
-
+import httpx
 from app.core.config import settings
 
 
 logger = logging.getLogger(
     __name__
 )
+
 def _send_message(
     message: EmailMessage,
 ) -> None:
     """
-    Send an email using the configured SMTP service.
+    Send transactional email through Resend's HTTPS API.
 
-    Background tasks call this after database work has completed.
+    SMTP remains available as a fallback for environments where
+    outbound SMTP connections are permitted.
     """
+
+    if (
+        settings.resend_api_key
+        and settings.resend_from_email
+    ):
+        message["From"] = (
+            settings.resend_from_email
+        )
+
+        payload: dict[str, object] = {
+            "from": settings.resend_from_email,
+            "to": [str(message["To"])],
+            "subject": str(message["Subject"]),
+            "text": message.get_content(),
+        }
+
+        if settings.resend_reply_to_email:
+            payload["reply_to"] = (
+                settings.resend_reply_to_email
+            )
+
+        try:
+            response = httpx.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": (
+                        "Bearer "
+                        f"{settings.resend_api_key}"
+                    ),
+                    "Content-Type": (
+                        "application/json"
+                    ),
+                },
+                json=payload,
+                timeout=20,
+            )
+
+            response.raise_for_status()
+
+        except httpx.HTTPError:
+            logger.exception(
+                "Unable to send Resend email "
+                "with subject: %s",
+                message.get("Subject"),
+            )
+
+        return
 
     if (
         not settings.smtp_host
         or not settings.smtp_from_email
     ):
-        if (
-            settings.environment.lower()
-            == "local"
-        ):
-            logger.warning(
-                "Email skipped because SMTP is not configured. Subject: %s",
-                message.get("Subject"),
-            )
-
+        logger.warning(
+            "Email skipped because no email "
+            "provider is configured. Subject: %s",
+            message.get("Subject"),
+        )
         return
 
     message["From"] = (
@@ -60,10 +105,11 @@ def _send_message(
 
     except Exception:
         logger.exception(
-            "Unable to send email with subject: %s",
+            "Unable to send SMTP email "
+            "with subject: %s",
             message.get("Subject"),
         )
-
+        
 def send_password_reset_email(
     email: str,
     customer_name: str,
