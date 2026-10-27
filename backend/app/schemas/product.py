@@ -94,12 +94,28 @@ class ProductResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        
+        
+class AdminProductListItem(
+    ProductResponse,
+):
+    """
+    Product fields required by admin
+    listing interfaces.
+    """
+
+    category_name: str | None
+
+    thumbnail_url: str | None
+    
+    
 class AdminProductPage(BaseModel):
     """
     Paginated admin product response.
     """
-
-    items: list[ProductResponse]
+    items: list[
+        AdminProductListItem
+    ]
 
     total: int
 

@@ -50,6 +50,78 @@ def _product_card_data(product: Product) -> dict:
         "is_active": product.is_active,
         "is_featured": product.is_featured,
     }
+    
+def _admin_product_list_data(
+    product: Product,
+) -> dict:
+    """
+    Build product data for admin listing
+    interfaces without requiring a wide
+    desktop table.
+    """
+
+    media_items = sorted(
+        product.media,
+        key=lambda item: (
+            item.display_order,
+            item.id,
+        ),
+    )
+
+    primary_media = next(
+        (
+            item
+            for item in media_items
+            if item.is_primary
+        ),
+        (
+            media_items[0]
+            if media_items
+            else None
+        ),
+    )
+
+    thumbnail_url = (
+        (
+            primary_media.thumbnail_url
+            or primary_media.file_url
+        )
+        if primary_media is not None
+        else None
+    )
+
+    return {
+        "id": product.id,
+        "category_id":
+            product.category_id,
+        "category_name": (
+            product.category.name
+            if product.category
+            else None
+        ),
+        "product_code":
+            product.product_code,
+        "has_variants":
+            product.has_variants,
+        "name": product.name,
+        "description":
+            product.description,
+        "price": product.price,
+        "weight": product.weight,
+        "size_chart":
+            product.size_chart,
+        "is_active":
+            product.is_active,
+        "is_featured":
+            product.is_featured,
+        "created_at":
+            product.created_at,
+        "updated_at":
+            product.updated_at,
+        "thumbnail_url":
+            thumbnail_url,
+    }
+
 def create_product(
     db: Session,
     data: ProductCreate,
@@ -152,7 +224,17 @@ def get_admin_products(
     Includes active and inactive products.
     """
 
-    products_query = db.query(Product)
+    products_query = (
+        db.query(Product)
+        .options(
+            selectinload(
+                Product.media
+            ),
+            selectinload(
+                Product.category
+            ),
+        )
+    )
 
     if query:
         search_text = (
@@ -222,7 +304,12 @@ def get_admin_products(
     )
 
     return {
-        "items": products,
+        "items": [
+            _admin_product_list_data(
+                product
+            )
+            for product in products
+        ],
         "total": total,
         "page": safe_page,
         "page_size": page_size,
